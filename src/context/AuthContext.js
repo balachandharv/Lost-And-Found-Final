@@ -1,113 +1,176 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { authAPI, usersAPI } from "../services/api";
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
+
+// Default demo accounts
+const DEFAULT_USERS = [
+    { id: "U1", email: "cmariappan15@gmail.com", password: "student123", role: "Student", name: "Student User", status: "Active" },
+    { id: "U2", email: "balachandhar021@gmail.com", password: "admin123", role: "Admin", name: "Admin User", status: "Active" }
+];
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Check for existing token on mount
+    // Initialize users and check for existing session
     useEffect(() => {
-        const checkAuth = async () => {
-            const token = localStorage.getItem("token");
-            if (token) {
-                try {
-                    const result = await authAPI.getCurrentUser();
-                    if (result.success) {
-                        setUser(result.user);
-                    } else {
-                        // Token invalid, clear it
-                        localStorage.removeItem("token");
-                    }
-                } catch (error) {
-                    console.error("Auth check failed:", error);
-                    localStorage.removeItem("token");
-                }
-            }
-            setLoading(false);
-        };
+        // Load users from localStorage or use defaults
+        const storedUsers = localStorage.getItem("users");
+        if (storedUsers) {
+            setUsers(JSON.parse(storedUsers));
+        } else {
+            setUsers(DEFAULT_USERS);
+            localStorage.setItem("users", JSON.stringify(DEFAULT_USERS));
+        }
 
-        checkAuth();
+        // Check for existing session
+        const token = localStorage.getItem("token");
+        const storedUser = localStorage.getItem("user");
+
+        if (token && storedUser) {
+            try {
+                const parsedUser = JSON.parse(storedUser);
+                if (parsedUser.status !== "Blocked") {
+                    setUser(parsedUser);
+                } else {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                }
+            } catch (e) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+            }
+        }
+
+        setLoading(false);
     }, []);
 
-    // Fetch users if admin
-    useEffect(() => {
-        const fetchUsers = async () => {
-            if (user && user.role === "Admin") {
-                try {
-                    const result = await usersAPI.getAll();
-                    if (result.success) {
-                        setUsers(result.users);
-                    }
-                } catch (error) {
-                    console.error("Failed to fetch users:", error);
-                }
-            }
-        };
+    // Login with email and password
+    const login = (email, password) => {
+        // Get latest users from state
+        const currentUsers = JSON.parse(localStorage.getItem("users") || "[]");
 
-        fetchUsers();
-    }, [user]);
+        // Find user by email
+        const foundUser = currentUsers.find(
+            u => u.email.toLowerCase() === email.toLowerCase()
+        );
 
-    const login = (userData) => {
+        if (!foundUser) {
+            return { success: false, message: "No account found with this email. Please sign up first." };
+        }
+
+        if (foundUser.password !== password) {
+            return { success: false, message: "Incorrect password. Please try again." };
+        }
+
+        if (foundUser.status === "Blocked") {
+            return { success: false, message: "Your account has been blocked by an Admin." };
+        }
+
+        // Success - set user and persist
+        const userData = { ...foundUser };
+        delete userData.password; // Don't store password in session
+
         setUser(userData);
-        return { success: true };
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("token", `session_${Date.now()}`);
+
+        return { success: true, user: userData };
     };
 
-    const updateUserStatus = async (id, newStatus) => {
-        try {
-            const result = await usersAPI.updateStatus(id, newStatus);
-            if (result.success) {
-                // Update local state
-                setUsers(prev => prev.map(u =>
-                    u.id === id ? { ...u, status: newStatus } : u
-                ));
+    // Register new user
+    const register = ({ name, email, password, role = "Student" }) => {
+        const currentUsers = JSON.parse(localStorage.getItem("users") || "[]");
 
-                // If we just blocked the currently logged in user, kick them out
-                if (user && user.id === id && newStatus === "Blocked") {
-                    logout();
-                }
-            }
-            return result;
-        } catch (error) {
-            console.error("Update user status failed:", error);
-            return { success: false, message: "Network error" };
+        // Check if email already exists
+        const emailExists = currentUsers.some(
+            u => u.email.toLowerCase() === email.toLowerCase()
+        );
+
+        if (emailExists) {
+            return { success: false, message: "An account with this email already exists." };
+        }
+
+        // Create new user
+        const newUser = {
+            id: `U${Date.now()}`,
+            name,
+            email: email.toLowerCase(),
+            password,
+            role,
+            status: "Active",
+            createdAt: new Date().toISOString()
+        };
+
+        // Add to users list
+        const updatedUsers = [...currentUsers, newUser];
+        setUsers(updatedUsers);
+        localStorage.setItem("users", JSON.stringify(updatedUsers));
+
+        return { success: true, user: newUser };
+    };
+
+    // Update user status (Admin function)
+    const updateUserStatus = (id, newStatus) => {
+        const updatedUsers = users.map(u =>
+            u.id === id ? { ...u, status: newStatus } : u
+        );
+        setUsers(updatedUsers);
+        localStorage.setItem("users", JSON.stringify(updatedUsers));
+
+        // If blocked the current user, log them out
+        if (user && user.id === id && newStatus === "Blocked") {
+            logout();
         }
     };
 
+    // Update user profile
     const updateProfile = (updatedData) => {
         if (!user) return { success: false, message: "No user logged in" };
 
         const newUser = { ...user, ...updatedData };
         setUser(newUser);
-        // In future: send to backend /api/users/profile endpoint
+        localStorage.setItem("user", JSON.stringify(newUser));
+
+        // Update in users list
+        const updatedUsers = users.map(u => u.id === user.id ? { ...newUser, password: u.password } : u);
+        setUsers(updatedUsers);
+        localStorage.setItem("users", JSON.stringify(updatedUsers));
+
         return { success: true };
     };
 
+    // Logout
     const logout = () => {
         setUser(null);
-        setUsers([]);
         localStorage.removeItem("token");
-        window.location.href = "/";
+        localStorage.removeItem("user");
+        window.location.href = "/login";
     };
 
-    // Show nothing while checking auth
+    // Loading screen
     if (loading) {
         return (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+            <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: "100vh",
+                background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)"
+            }}>
                 <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🔍</div>
-                    <div style={{ color: "#64748b" }}>Loading...</div>
+                    <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔍</div>
+                    <div style={{ color: "#64748b", fontWeight: 500 }}>Loading...</div>
                 </div>
             </div>
         );
     }
 
     return (
-        <AuthContext.Provider value={{ user, users, login, logout, updateUserStatus, updateProfile }}>
+        <AuthContext.Provider value={{ user, users, login, logout, register, updateUserStatus, updateProfile }}>
             {children}
         </AuthContext.Provider>
     );

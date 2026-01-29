@@ -1,5 +1,22 @@
 {
   "users": [],
   "reports": [],
-  "otps": []
+  "otps": [
+    {
+      "id": "OTP1769667529924",
+      "email": "cmariappan15@gmail.com",
+      "code": "189784",
+      "expiresAt": "2026-01-29T06:23:49.924Z",
+      "used": 0,
+      "createdAt": "2026-01-29T06:18:49.924Z"
+    },
+    {
+      "id": "OTP1769667550477",
+      "email": "balachandhar021@gmail.com",
+      "code": "623424",
+      "expiresAt": "2026-01-29T06:24:10.477Z",
+      "used": 0,
+      "createdAt": "2026-01-29T06:19:10.477Z"
+    }
+  ]
 }
