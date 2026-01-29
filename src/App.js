@@ -14,6 +14,7 @@ import ItemDetails from "./pages/ItemDetails";
 import ReportLost from "./pages/ReportLost";
 import ReportFound from "./pages/ReportFound";
 import Profile from "./pages/Profile";
+import EmailVerification from "./pages/EmailVerification";
 
 import { AuthProvider } from "./context/AuthContext";
 import { ReportProvider } from "./context/ReportContext";
@@ -35,6 +36,7 @@ const AnimatedRoutes = () => {
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/admin-authority" element={<AdminAuthority />} />
+        <Route path="/verify-email" element={<EmailVerification />} />
       </Routes>
     </AnimatePresence>
   );

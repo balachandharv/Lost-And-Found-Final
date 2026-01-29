@@ -16,9 +16,25 @@ router.post('/request-otp', async (req, res) => {
         }
 
         // Check if email is in whitelist
-        const allowedUser = config.ALLOWED_USERS.find(
+        // Check if email is in whitelist
+        let allowedUser = config.ALLOWED_USERS.find(
             u => u.email.toLowerCase() === email.toLowerCase()
         );
+
+        // If not in whitelist, check for PSR college pattern (23it001 - 23it030)
+        if (!allowedUser && email.toLowerCase().endsWith('@psr.edu.in')) {
+            const idPart = email.split('@')[0].toLowerCase();
+            const validPattern = /^23it0(0[1-9]|[12][0-9]|30)$/;
+
+            if (validPattern.test(idPart)) {
+                const isAdmin = idPart === '23it008';
+                allowedUser = {
+                    email: email,
+                    name: isAdmin ? "Admin (PSR)" : "Student (PSR)",
+                    role: isAdmin ? "Admin" : "Student"
+                };
+            }
+        }
 
         if (!allowedUser) {
             return res.status(403).json({
@@ -85,10 +101,19 @@ router.post('/verify-otp', (req, res) => {
         // Mark OTP as used
         db.markOTPUsed(otpRecord.id);
 
-        // Get user info from whitelist
-        const allowedUser = config.ALLOWED_USERS.find(
+        // Get user info from whitelist or pattern
+        let allowedUser = config.ALLOWED_USERS.find(
             u => u.email.toLowerCase() === email.toLowerCase()
         );
+
+        if (!allowedUser && email.toLowerCase().endsWith('@psr.edu.in')) {
+            const idPart = email.split('@')[0].toLowerCase();
+            const isAdmin = idPart === '23it008';
+            allowedUser = {
+                name: isAdmin ? "Admin (PSR)" : "Student (PSR)",
+                role: isAdmin ? "Admin" : "Student"
+            };
+        }
 
         // Check if user exists in database, if not create
         let user = db.getOne('users', 'email', email.toLowerCase());
@@ -176,6 +201,110 @@ router.get('/me', (req, res) => {
     } catch (error) {
         console.error('Get user error:', error);
         res.status(401).json({ success: false, message: 'Invalid token' });
+    }
+});
+
+// Check if Google user exists (for modal flow)
+router.post('/google-check', (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+
+        const user = db.getOne('users', 'email', email.toLowerCase());
+
+        if (user) {
+            res.json({
+                success: true,
+                exists: true,
+                user: {
+                    name: user.name,
+                    email: user.email,
+                    role: user.role
+                }
+            });
+        } else {
+            res.json({
+                success: true,
+                exists: false
+            });
+        }
+    } catch (error) {
+        console.error('Google check error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Google OAuth Login/Register
+router.post('/google', (req, res) => {
+    try {
+        const { email, name, googleId, picture } = req.body;
+
+        if (!email || !googleId) {
+            return res.status(400).json({ success: false, message: 'Email and Google ID are required' });
+        }
+
+        // Check if user exists
+        let user = db.getOne('users', 'email', email.toLowerCase());
+
+        if (!user) {
+            // Create new user from Google auth
+            // Check if this email should be admin
+            const isAdmin = email.toLowerCase() === 'balachandhar021@gmail.com';
+
+            const userId = `U${Date.now()}`;
+            user = db.insert('users', {
+                id: userId,
+                name: name || email.split('@')[0],
+                email: email.toLowerCase(),
+                role: isAdmin ? 'Admin' : 'Student',
+                status: 'Active',
+                googleId,
+                profileImage: picture || null,
+                createdAt: new Date().toISOString()
+            });
+            console.log('Created new Google user:', user.email);
+        } else {
+            // Update Google ID if not set
+            if (!user.googleId) {
+                db.update('users', 'id', user.id, { googleId, profileImage: picture });
+            }
+        }
+
+        // Check if blocked
+        if (user.status === 'Blocked') {
+            return res.status(403).json({
+                success: false,
+                message: 'Your account has been blocked by an Admin.'
+            });
+        }
+
+        // Generate JWT token
+        const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            config.JWT_SECRET,
+            { expiresIn: config.JWT_EXPIRES_IN }
+        );
+
+        res.json({
+            success: true,
+            message: 'Login successful',
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                status: user.status,
+                profileImage: user.profileImage
+            }
+        });
+
+    } catch (error) {
+        console.error('Google auth error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 

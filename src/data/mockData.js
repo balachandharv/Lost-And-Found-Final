@@ -6,11 +6,11 @@ export const mockStats = {
 };
 
 export const mockUsers = [
-    { id: "U001", name: "John Doe", email: "john@college.edu", role: "Student", status: "Active" },
-    { id: "U002", name: "Jane Smith", email: "jane@college.edu", role: "Student", status: "Active" },
-    { id: "U003", name: "Robert Fox", email: "robert@college.edu", role: "Student", status: "Blocked" },
-    { id: "U004", name: "Emily Davis", email: "emily@college.edu", role: "Admin", status: "Active" },
-    { id: "U005", name: "Michael Brown", email: "michael@college.edu", role: "Student", status: "Active" },
+    { id: "U001", name: "Student 1", email: "23it001@psr.edu.in", role: "Student", status: "Active" },
+    { id: "U002", name: "Student 2", email: "23it002@psr.edu.in", role: "Student", status: "Active" },
+    { id: "U003", name: "Student 3", email: "23it003@psr.edu.in", role: "Student", status: "Active" },
+    { id: "U008", name: "Balachandhar", email: "23it008@psr.edu.in", role: "Admin", status: "Active" },
+    { id: "U010", name: "Student 10", email: "23it010@psr.edu.in", role: "Student", status: "Active" },
 ];
 
 export const mockReports = [

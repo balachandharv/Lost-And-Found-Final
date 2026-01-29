@@ -4,10 +4,10 @@ const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
-// Default demo accounts
+// Default demo accounts - PSR College IDs only
 const DEFAULT_USERS = [
-    { id: "U1", email: "cmariappan15@gmail.com", password: "student123", role: "Student", name: "Student User", status: "Active" },
-    { id: "U2", email: "balachandhar021@gmail.com", password: "admin123", role: "Admin", name: "Admin User", status: "Active" }
+    { id: "U1", email: "23it001@psr.edu.in", password: "student123", role: "Student", name: "Student User", status: "Active" },
+    { id: "U2", email: "23it008@psr.edu.in", password: "admin123", role: "Admin", name: "Balachandhar (Admin)", status: "Active" }
 ];
 
 export const AuthProvider = ({ children }) => {
@@ -81,9 +81,37 @@ export const AuthProvider = ({ children }) => {
         return { success: true, user: userData };
     };
 
-    // Register new user
+    // Validate college email - only PSR college IDs allowed
+    const isValidCollegeEmail = (emailToCheck) => {
+        const email = emailToCheck.toLowerCase().trim();
+
+        // Must end with @psr.edu.in
+        if (!email.endsWith('@psr.edu.in')) {
+            return { valid: false, message: "Only PSR college email IDs are allowed." };
+        }
+
+        // Extract the ID part before @
+        const idPart = email.split('@')[0];
+
+        // Valid format: 23it001 to 23it030
+        const validPattern = /^23it0(0[1-9]|[12][0-9]|30)$/;
+
+        if (!validPattern.test(idPart)) {
+            return { valid: false, message: "Invalid college ID. Only 23IT001 to 23IT030 are allowed." };
+        }
+
+        return { valid: true, isAdmin: idPart === '23it008' };
+    };
+
+    // Register new user (Mock)
     const register = ({ name, email, password, role = "Student" }) => {
         const currentUsers = JSON.parse(localStorage.getItem("users") || "[]");
+
+        // Validate college email
+        const validation = isValidCollegeEmail(email);
+        if (!validation.valid) {
+            return { success: false, message: validation.message };
+        }
 
         // Check if email already exists
         const emailExists = currentUsers.some(
@@ -94,13 +122,16 @@ export const AuthProvider = ({ children }) => {
             return { success: false, message: "An account with this email already exists." };
         }
 
+        // Auto-assign Admin role for 23it008
+        const assignedRole = validation.isAdmin ? "Admin" : role;
+
         // Create new user
         const newUser = {
             id: `U${Date.now()}`,
             name,
             email: email.toLowerCase(),
             password,
-            role,
+            role: assignedRole,
             status: "Active",
             createdAt: new Date().toISOString()
         };
@@ -111,6 +142,51 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("users", JSON.stringify(updatedUsers));
 
         return { success: true, user: newUser };
+    };
+
+    // --- Backend Integration for OTP ---
+
+    const API_URL = "http://localhost:5000/api/auth";
+
+    const requestOtp = async (email) => {
+        try {
+            const response = await fetch(`${API_URL}/request-otp`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email })
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Request OTP error:", error);
+            // Fallback for demo/testing if backend is down
+            return { success: false, message: "Failed to connect to server. Ensure backend is running." };
+        }
+    };
+
+    const verifyOtp = async (email, otp) => {
+        try {
+            const response = await fetch(`${API_URL}/verify-otp`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, otp })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setUser(data.user);
+                localStorage.setItem("user", JSON.stringify(data.user));
+                localStorage.setItem("token", data.token);
+            }
+            return data;
+        } catch (error) {
+            console.error("Verify OTP error:", error);
+            return { success: false, message: "Verification failed. Server error." };
+        }
+    };
+
+    const resendOtp = async (email) => {
+        return requestOtp(email);
     };
 
     // Update user status (Admin function)
@@ -170,7 +246,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     return (
-        <AuthContext.Provider value={{ user, users, login, logout, register, updateUserStatus, updateProfile }}>
+        <AuthContext.Provider value={{ user, users, login, logout, register, updateUserStatus, updateProfile, requestOtp, verifyOtp, resendOtp }}>
             {children}
         </AuthContext.Provider>
     );
