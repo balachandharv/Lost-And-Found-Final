@@ -126,7 +126,7 @@ function ReportFound() {
                             name="titleSelect"
                             onChange={handleChange}
                             required
-                            style={{ padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid var(--border)" }}
+                            className="form-input"
                         >
                             <option value="">-- Did you find one of these lost items? --</option>
                             {lostItems.map(item => (
@@ -146,7 +146,7 @@ function ReportFound() {
                                 value={formData.title}
                                 onChange={handleChange}
                                 required
-                                style={{ marginTop: "0.5rem" }}
+                                className="form-input mt-2"
                             />
                         )}
                     </div>
@@ -160,6 +160,7 @@ function ReportFound() {
                                 value={formData.category}
                                 onChange={handleChange}
                                 required
+                                className="form-input"
                             >
                                 <option value="">Select a category</option>
                                 <option value="electronics">Electronics</option>
@@ -179,6 +180,7 @@ function ReportFound() {
                                 value={formData.date}
                                 onChange={handleChange}
                                 required
+                                className="form-input"
                             />
                         </div>
                     </div>
@@ -193,6 +195,7 @@ function ReportFound() {
                             value={formData.location}
                             onChange={handleChange}
                             required
+                            className="form-input"
                         />
                     </div>
 
@@ -206,6 +209,7 @@ function ReportFound() {
                             value={formData.description}
                             onChange={handleChange}
                             required
+                            className="form-input"
                         ></textarea>
                     </div>
 
@@ -219,6 +223,7 @@ function ReportFound() {
                             value={formData.contact}
                             onChange={handleChange}
                             required
+                            className="form-input"
                         />
                     </div>
 

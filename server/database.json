@@ -1,5 +1,33 @@
 {
-  "users": [],
+  "users": [
+    {
+      "id": "U1769679888520",
+      "name": "bala",
+      "email": "23it008@psr.edu.in",
+      "password": "12345678",
+      "role": "Admin",
+      "status": "Active",
+      "createdAt": "2026-01-29T09:44:48.520Z"
+    },
+    {
+      "id": "U1769679925568",
+      "name": "saravana",
+      "email": "23it022@psr.edu.in",
+      "password": "12345678",
+      "role": "Student",
+      "status": "Active",
+      "createdAt": "2026-01-29T09:45:25.568Z"
+    },
+    {
+      "id": "U1769680010069",
+      "name": "gowtham",
+      "email": "23it009@psr.edu.in",
+      "password": "12345678",
+      "role": "Student",
+      "status": "Active",
+      "createdAt": "2026-01-29T09:46:50.069Z"
+    }
+  ],
   "reports": [],
   "otps": []
 }

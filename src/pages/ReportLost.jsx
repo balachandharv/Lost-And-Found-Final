@@ -123,6 +123,7 @@ function ReportLost() {
                             value={formData.title}
                             onChange={handleChange}
                             required
+                            className="form-input"
                         />
                     </div>
 
@@ -135,6 +136,7 @@ function ReportLost() {
                                 value={formData.category}
                                 onChange={handleChange}
                                 required
+                                className="form-input"
                             >
                                 <option value="">Select a category</option>
                                 <option value="electronics">Electronics</option>
@@ -154,6 +156,7 @@ function ReportLost() {
                                 value={formData.date}
                                 onChange={handleChange}
                                 required
+                                className="form-input"
                             />
                         </div>
                     </div>
@@ -167,6 +170,7 @@ function ReportLost() {
                             placeholder="e.g. Near the main library entrance"
                             value={formData.location}
                             onChange={handleChange}
+                            className="form-input"
                         />
                     </div>
 
@@ -180,6 +184,7 @@ function ReportLost() {
                             value={formData.description}
                             onChange={handleChange}
                             required
+                            className="form-input"
                         ></textarea>
                     </div>
 
@@ -193,6 +198,7 @@ function ReportLost() {
                             value={formData.contact}
                             onChange={handleChange}
                             required
+                            className="form-input"
                         />
                     </div>
 

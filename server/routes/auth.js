@@ -9,39 +9,29 @@ const { generateOTP, sendOTPEmail } = require('../services/emailService');
 // Request OTP - Step 1
 router.post('/request-otp', async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, type = 'login' } = req.body;
 
         if (!email) {
             return res.status(400).json({ success: false, message: 'Email is required' });
         }
 
-        // Check if email is in whitelist
-        // Check if email is in whitelist
-        let allowedUser = config.ALLOWED_USERS.find(
-            u => u.email.toLowerCase() === email.toLowerCase()
-        );
-
-        // If not in whitelist, check for PSR college pattern (23it001 - 23it030)
-        if (!allowedUser && email.toLowerCase().endsWith('@psr.edu.in')) {
-            const idPart = email.split('@')[0].toLowerCase();
-            const validPattern = /^23it0(0[1-9]|[12][0-9]|30)$/;
-
-            if (validPattern.test(idPart)) {
-                const isAdmin = idPart === '23it008';
-                allowedUser = {
-                    email: email,
-                    name: isAdmin ? "Admin (PSR)" : "Student (PSR)",
-                    role: isAdmin ? "Admin" : "Student"
-                };
-            }
-        }
-
-        if (!allowedUser) {
-            return res.status(403).json({
+        // Check if user exists in DB - if not, DENY OTP
+        const userExists = db.getOne('users', 'email', email.toLowerCase());
+        if (!userExists) {
+            return res.status(404).json({
                 success: false,
-                message: 'Access denied. This email is not authorized.'
+                message: 'Email not registered. Please Sign Up first.'
             });
         }
+
+        // Check if email is in whitelist OR pattern allowed
+        // (We keep this check if you want to restrict who can even have an account,
+        // but since we checked DB existence, they must have passed registration logic already.
+        // So we can arguably skip strict pattern check here if we trust the DB content,
+        // BUT let's keep it for safety if you want to ban users later by removing from whitelist)
+
+        // Actually, if they are in DB, they are valid.
+        // Let's just use the DB user info for the email.
 
         // Generate OTP
         const otp = generateOTP();
@@ -58,7 +48,7 @@ router.post('/request-otp', async (req, res) => {
         });
 
         // Send OTP email
-        const emailResult = await sendOTPEmail(email, otp, allowedUser.name);
+        const emailResult = await sendOTPEmail(email, otp, userExists.name, type);
 
         if (!emailResult.success) {
             return res.status(500).json({
@@ -70,11 +60,96 @@ router.post('/request-otp', async (req, res) => {
         res.json({
             success: true,
             message: 'OTP sent to your email',
-            userName: allowedUser.name
+            userName: userExists.name
         });
 
     } catch (error) {
         console.error('Request OTP error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Register New User (Sign Up)
+router.post('/register', async (req, res) => {
+    try {
+        const { name, email, password, role } = req.body;
+
+        if (!name || !email || !password) {
+            return res.status(400).json({ success: false, message: 'All fields are required' });
+        }
+
+        // Validate Email Range and Role
+        const emailLower = email.toLowerCase().trim();
+        if (!emailLower.endsWith('@psr.edu.in')) {
+            return res.status(400).json({ success: false, message: 'Only @psr.edu.in emails are allowed' });
+        }
+
+        const idPart = emailLower.split('@')[0];
+        const validPattern = /^23it0(0[1-9]|[12][0-9]|30)$/;
+
+        if (!validPattern.test(idPart)) {
+            return res.status(400).json({ success: false, message: 'Invalid ID. Allowed: 23IT001 to 23IT030' });
+        }
+
+        // Determine Role
+        const assignedRole = (idPart === '23it008') ? 'Admin' : 'Student';
+
+        // Check if user already exists
+        const existingUser = db.getOne('users', 'email', emailLower);
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: 'User already exists' });
+        }
+
+        // Create new user
+        const userId = `U${Date.now()}`;
+        const newUser = db.insert('users', {
+            id: userId,
+            name,
+            email: emailLower,
+            password, // In a real app, hash this!
+            role: assignedRole,
+            status: 'Active',
+            createdAt: new Date().toISOString()
+        });
+
+        res.json({ success: true, user: newUser });
+
+    } catch (error) {
+        console.error('Register error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Password Login
+router.post('/login', (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const user = db.getOne('users', 'email', email.toLowerCase());
+
+        if (!user || user.password !== password) {
+            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+        }
+
+        if (user.status === 'Blocked') {
+            return res.status(403).json({ success: false, message: 'Your account has been blocked' });
+        }
+
+        // Generate Token
+        const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            config.JWT_SECRET,
+            { expiresIn: config.JWT_EXPIRES_IN }
+        );
+
+        res.json({
+            success: true,
+            user: { ...user, password: undefined },
+            token
+        });
+
+    } catch (error) {
+        console.error('Login error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
@@ -101,32 +176,17 @@ router.post('/verify-otp', (req, res) => {
         // Mark OTP as used
         db.markOTPUsed(otpRecord.id);
 
-        // Get user info from whitelist or pattern
-        let allowedUser = config.ALLOWED_USERS.find(
-            u => u.email.toLowerCase() === email.toLowerCase()
-        );
+        // MARKED AS USED ABOVE
 
-        if (!allowedUser && email.toLowerCase().endsWith('@psr.edu.in')) {
-            const idPart = email.split('@')[0].toLowerCase();
-            const isAdmin = idPart === '23it008';
-            allowedUser = {
-                name: isAdmin ? "Admin (PSR)" : "Student (PSR)",
-                role: isAdmin ? "Admin" : "Student"
-            };
-        }
-
-        // Check if user exists in database, if not create
+        // Check if user exists in database
         let user = db.getOne('users', 'email', email.toLowerCase());
 
         if (!user) {
-            const userId = `U${Date.now()}`;
-            user = db.insert('users', {
-                id: userId,
-                name: allowedUser.name,
-                email: email.toLowerCase(),
-                role: allowedUser.role,
-                status: 'Active',
-                createdAt: new Date().toISOString()
+            // This should theoretically not happen if request-otp blocks non-existing users,
+            // BUT if a user was deleted between request and verify, prompt error.
+            return res.status(404).json({
+                success: false,
+                message: 'User account not found.'
             });
         }
 
@@ -163,6 +223,41 @@ router.post('/verify-otp', (req, res) => {
 
     } catch (error) {
         console.error('Verify OTP error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Reset Password
+router.post('/reset-password', (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ success: false, message: 'All fields are required' });
+        }
+
+        // Verify OTP
+        const otpRecord = db.findValidOTP(email.toLowerCase(), otp);
+        if (!otpRecord) {
+            return res.status(401).json({ success: false, message: 'Invalid or expired OTP' });
+        }
+
+        // Mark OTP as used
+        db.markOTPUsed(otpRecord.id);
+
+        // Find user
+        const user = db.getOne('users', 'email', email.toLowerCase());
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Update password
+        db.update('users', 'id', user.id, { password: newPassword });
+
+        res.json({ success: true, message: 'Password reset successfully' });
+
+    } catch (error) {
+        console.error('Reset password error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });

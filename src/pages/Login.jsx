@@ -8,7 +8,7 @@ import { useAuth } from "../context/AuthContext";
 
 function Login() {
     const navigate = useNavigate();
-    const { user, login, register, requestOtp } = useAuth();
+    const { user, login, register, requestOtp, resetPassword } = useAuth();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -24,6 +24,11 @@ function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    // Forgot Password States
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
+    const [resetStep, setResetStep] = useState(1);
+    const [otp, setOtp] = useState("");
+
     // Redirect if already logged in
     useEffect(() => {
         if (user) {
@@ -38,22 +43,25 @@ function Login() {
     // Clear form when switching modes
     const switchMode = () => {
         setIsSignUp(!isSignUp);
+        setIsForgotPassword(false);
+        setResetStep(1);
         setError("");
         setSuccess("");
         setName("");
         setEmail("");
         setPassword("");
         setConfirmPassword("");
+        setOtp("");
     };
 
     // Handle Sign In
-    const handleSignIn = (e) => {
+    const handleSignIn = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError("");
 
-        setTimeout(() => {
-            const result = login(email, password);
+        try {
+            const result = await login(email, password);
 
             if (result.success) {
                 setLoading(false);
@@ -66,7 +74,10 @@ function Login() {
                 setError(result.message);
                 setLoading(false);
             }
-        }, 600);
+        } catch (err) {
+            setError("Login failed. Please try again.");
+            setLoading(false);
+        }
     };
 
     // Validate college email - only PSR college IDs allowed
@@ -95,7 +106,7 @@ function Login() {
     };
 
     // Handle Sign Up
-    const handleSignUp = (e) => {
+    const handleSignUp = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError("");
@@ -131,8 +142,8 @@ function Login() {
         // Determine role based on email
         const role = emailValidation.isAdmin ? "Admin" : "Student";
 
-        setTimeout(() => {
-            const result = register({ name, email: email.toLowerCase(), password, role });
+        try {
+            const result = await register({ name, email: email.toLowerCase(), password, role });
 
             if (result.success) {
                 setSuccess(`Account created as ${role}! You can now sign in.`);
@@ -142,8 +153,10 @@ function Login() {
             } else {
                 setError(result.message);
             }
-            setLoading(false);
-        }, 600);
+        } catch (err) {
+            setError("Registration failed.");
+        }
+        setLoading(false);
     };
 
     // Handle OTP Login Request
@@ -174,6 +187,67 @@ function Login() {
             setError("Failed to request OTP. Please try again.");
             setLoading(false);
         }
+    };
+
+    // Handle Request Reset OTP
+    const handleRequestResetOtp = async (e) => {
+        e.preventDefault();
+        if (!email) {
+            setError("Please enter your email.");
+            return;
+        }
+        setLoading(true);
+        setError("");
+        setSuccess("");
+
+        try {
+            const result = await requestOtp(email, 'reset');
+            if (result.success) {
+                setResetStep(2);
+                setSuccess("OTP sent! Please check your email.");
+            } else {
+                setError(result.message);
+            }
+        } catch (err) {
+            setError("Failed to send OTP.");
+        }
+        setLoading(false);
+    };
+
+    // Handle Reset Password
+    const handleResetPassword = async (e) => {
+        e.preventDefault();
+        if (!otp || !password || !confirmPassword) {
+            setError("All fields are required.");
+            return;
+        }
+        if (password !== confirmPassword) {
+            setError("Passwords do not match.");
+            return;
+        }
+
+        setLoading(true);
+        setError("");
+
+        try {
+            const result = await resetPassword(email, otp, password);
+            if (result.success) {
+                setSuccess("Password reset successfully! You can now sign in.");
+                setTimeout(() => {
+                    setIsForgotPassword(false);
+                    setResetStep(1);
+                    setOtp("");
+                    setPassword("");
+                    setConfirmPassword("");
+                    setSuccess("");
+                }, 2000);
+            } else {
+                setError(result.message);
+            }
+        } catch (err) {
+            setError("Failed to reset password.");
+        }
+        setLoading(false);
     };
 
     // Input styles
@@ -223,7 +297,160 @@ function Login() {
                         <AnimatePresence mode="wait">
                             {loading ? (
                                 <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ padding: "2rem 0" }}>
-                                    <Loader text={isSignUp ? "Creating account..." : "Signing in..."} />
+                                    <Loader text={
+                                        isForgotPassword ? "Processing..." :
+                                            isSignUp ? "Creating account..." : "Signing in..."
+                                    } />
+                                </motion.div>
+                            ) : isForgotPassword ? (
+                                <motion.div
+                                    key="forgot-password"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                >
+                                    <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+                                        <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🔐</div>
+                                        <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#1e293b", marginBottom: "0.25rem" }}>
+                                            {resetStep === 1 ? "Forgot Password?" : "Reset Password"}
+                                        </h2>
+                                        <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                                            {resetStep === 1
+                                                ? "Enter your email to receive a reset code"
+                                                : "Enter the code sent to your email"}
+                                        </p>
+                                    </div>
+
+                                    {error && (
+                                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{
+                                            color: "#dc2626", fontSize: "0.875rem", marginBottom: "1rem", background: "#fef2f2",
+                                            padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #fecaca", textAlign: "center"
+                                        }}>
+                                            ⚠️ {error}
+                                        </motion.div>
+                                    )}
+
+                                    {success && (
+                                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{
+                                            color: "#16a34a", fontSize: "0.875rem", marginBottom: "1rem", background: "#f0fdf4",
+                                            padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #bbf7d0", textAlign: "center"
+                                        }}>
+                                            ✅ {success}
+                                        </motion.div>
+                                    )}
+
+                                    <form onSubmit={resetStep === 1 ? handleRequestResetOtp : handleResetPassword} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+
+                                        {/* Step 1: Email Only */}
+                                        <div style={{ display: resetStep === 1 ? 'block' : 'none' }}>
+                                            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: "0.5rem" }}>
+                                                College Email ID
+                                            </label>
+                                            <input
+                                                type="email"
+                                                placeholder="23itXXX@psr.edu.in"
+                                                required={resetStep === 1}
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                style={inputStyle}
+                                                onFocus={handleInputFocus}
+                                                onBlur={handleInputBlur}
+                                            />
+                                        </div>
+
+                                        {/* Step 2: OTP and New Password */}
+                                        {resetStep === 2 && (
+                                            <>
+                                                <div>
+                                                    <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: "0.5rem" }}>
+                                                        Enter OTP Code
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Enter OTP code"
+                                                        required
+                                                        value={otp}
+                                                        onChange={(e) => setOtp(e.target.value)}
+                                                        style={{ ...inputStyle, textAlign: 'center', letterSpacing: '0.2rem', fontWeight: 'bold' }}
+                                                        onFocus={handleInputFocus}
+                                                        onBlur={handleInputBlur}
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: "0.5rem" }}>
+                                                        New Password
+                                                    </label>
+                                                    <div style={{ position: "relative" }}>
+                                                        <input
+                                                            type={showPassword ? "text" : "password"}
+                                                            placeholder="New password (min 6 chars)"
+                                                            required
+                                                            value={password}
+                                                            onChange={(e) => setPassword(e.target.value)}
+                                                            style={{ ...inputStyle, paddingRight: "3rem" }}
+                                                            onFocus={handleInputFocus}
+                                                            onBlur={handleInputBlur}
+                                                        />
+                                                        <button type="button" onClick={() => setShowPassword(!showPassword)} style={{
+                                                            position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)",
+                                                            background: "none", border: "none", cursor: "pointer", color: "#64748b"
+                                                        }}>
+                                                            {showPassword ? "🙈" : "👁️"}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: "0.5rem" }}>
+                                                        Confirm New Password
+                                                    </label>
+                                                    <input
+                                                        type="password"
+                                                        placeholder="Confirm new password"
+                                                        required
+                                                        value={confirmPassword}
+                                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                                        style={inputStyle}
+                                                        onFocus={handleInputFocus}
+                                                        onBlur={handleInputBlur}
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
+
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            type="submit"
+                                            style={{
+                                                width: "100%", padding: "0.875rem 1rem",
+                                                background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                                                color: "white", border: "none", borderRadius: "0.75rem",
+                                                cursor: "pointer", fontSize: "0.95rem", fontWeight: 600,
+                                                marginTop: "0.5rem", boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)"
+                                            }}
+                                        >
+                                            {resetStep === 1 ? "Send Reset Code" : "Reset Password"}
+                                        </motion.button>
+                                    </form>
+
+                                    <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
+                                        <button
+                                            onClick={() => {
+                                                setIsForgotPassword(false);
+                                                setResetStep(1);
+                                                setError("");
+                                                setSuccess("");
+                                            }}
+                                            style={{
+                                                background: "none", border: "none", color: "#64748b",
+                                                fontSize: "0.875rem", cursor: "pointer", textDecoration: "underline"
+                                            }}
+                                        >
+                                            Back to Sign In
+                                        </button>
+                                    </div>
                                 </motion.div>
                             ) : (
                                 <motion.div
@@ -369,6 +596,29 @@ function Login() {
                                                     {showPassword ? "🙈" : "👁️"}
                                                 </button>
                                             </div>
+                                            {!isSignUp && (
+                                                <div style={{ textAlign: "right", marginTop: "0.5rem" }}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setIsForgotPassword(true);
+                                                            setResetStep(1);
+                                                            setError("");
+                                                            setSuccess("");
+                                                        }}
+                                                        style={{
+                                                            background: "none",
+                                                            border: "none",
+                                                            color: "#2563eb",
+                                                            fontSize: "0.8rem",
+                                                            cursor: "pointer",
+                                                            fontWeight: 500
+                                                        }}
+                                                    >
+                                                        Forgot Password?
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Confirm Password (Sign Up only) */}

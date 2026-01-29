@@ -48,37 +48,28 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    // Login with email and password
-    const login = (email, password) => {
-        // Get latest users from state
-        const currentUsers = JSON.parse(localStorage.getItem("users") || "[]");
+    // Login with email and password (Backend via Payload)
+    const login = async (email, password) => {
+        try {
+            const response = await fetch(`${API_URL}/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await response.json();
 
-        // Find user by email
-        const foundUser = currentUsers.find(
-            u => u.email.toLowerCase() === email.toLowerCase()
-        );
-
-        if (!foundUser) {
-            return { success: false, message: "No account found with this email. Please sign up first." };
+            if (data.success) {
+                setUser(data.user);
+                localStorage.setItem("user", JSON.stringify(data.user));
+                localStorage.setItem("token", data.token);
+                // Sync users list from localStorage for now to keep app working if mixed usage
+                // In a full refactor, 'users' list should also come from backend
+            }
+            return data;
+        } catch (error) {
+            console.error("Login error:", error);
+            return { success: false, message: "Login failed. Server error." };
         }
-
-        if (foundUser.password !== password) {
-            return { success: false, message: "Incorrect password. Please try again." };
-        }
-
-        if (foundUser.status === "Blocked") {
-            return { success: false, message: "Your account has been blocked by an Admin." };
-        }
-
-        // Success - set user and persist
-        const userData = { ...foundUser };
-        delete userData.password; // Don't store password in session
-
-        setUser(userData);
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("token", `session_${Date.now()}`);
-
-        return { success: true, user: userData };
     };
 
     // Validate college email - only PSR college IDs allowed
@@ -103,57 +94,43 @@ export const AuthProvider = ({ children }) => {
         return { valid: true, isAdmin: idPart === '23it008' };
     };
 
-    // Register new user (Mock)
-    const register = ({ name, email, password, role = "Student" }) => {
-        const currentUsers = JSON.parse(localStorage.getItem("users") || "[]");
-
-        // Validate college email
+    // Register new user (Backend)
+    const register = async ({ name, email, password, role = "Student" }) => {
+        // Validate college email Client-side first
         const validation = isValidCollegeEmail(email);
         if (!validation.valid) {
             return { success: false, message: validation.message };
         }
 
-        // Check if email already exists
-        const emailExists = currentUsers.some(
-            u => u.email.toLowerCase() === email.toLowerCase()
-        );
-
-        if (emailExists) {
-            return { success: false, message: "An account with this email already exists." };
-        }
-
-        // Auto-assign Admin role for 23it008
         const assignedRole = validation.isAdmin ? "Admin" : role;
 
-        // Create new user
-        const newUser = {
-            id: `U${Date.now()}`,
-            name,
-            email: email.toLowerCase(),
-            password,
-            role: assignedRole,
-            status: "Active",
-            createdAt: new Date().toISOString()
-        };
+        try {
+            const response = await fetch(`${API_URL}/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, password, role: assignedRole })
+            });
+            const data = await response.json();
 
-        // Add to users list
-        const updatedUsers = [...currentUsers, newUser];
-        setUsers(updatedUsers);
-        localStorage.setItem("users", JSON.stringify(updatedUsers));
-
-        return { success: true, user: newUser };
+            // If successful, also save to localStorage for hybrid compatibility if needed
+            // But main source is now backend
+            return data;
+        } catch (error) {
+            console.error("Register error:", error);
+            return { success: false, message: "Registration failed. Server error." };
+        }
     };
 
     // --- Backend Integration for OTP ---
 
     const API_URL = "http://localhost:5000/api/auth";
 
-    const requestOtp = async (email) => {
+    const requestOtp = async (email, type = 'login') => {
         try {
             const response = await fetch(`${API_URL}/request-otp`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ email, type })
             });
             const data = await response.json();
             return data;
@@ -161,6 +138,22 @@ export const AuthProvider = ({ children }) => {
             console.error("Request OTP error:", error);
             // Fallback for demo/testing if backend is down
             return { success: false, message: "Failed to connect to server. Ensure backend is running." };
+        }
+    };
+
+    // Reset Password
+    const resetPassword = async (email, otp, newPassword) => {
+        try {
+            const response = await fetch(`${API_URL}/reset-password`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, otp, newPassword })
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Reset Password error:", error);
+            return { success: false, message: "Server error." };
         }
     };
 
@@ -246,7 +239,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     return (
-        <AuthContext.Provider value={{ user, users, login, logout, register, updateUserStatus, updateProfile, requestOtp, verifyOtp, resendOtp }}>
+        <AuthContext.Provider value={{ user, users, login, logout, register, updateUserStatus, updateProfile, requestOtp, verifyOtp, resendOtp, resetPassword }}>
             {children}
         </AuthContext.Provider>
     );

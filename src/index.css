@@ -24,8 +24,13 @@
   body {
     @apply font-sans text-slate-900 bg-slate-50 antialiased leading-normal;
   }
-  
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-bold tracking-tight text-slate-900 mb-4;
   }
 }
@@ -46,15 +51,19 @@
   .btn-primary {
     @apply bg-blue-600 text-white hover:bg-blue-700 hover:-translate-y-px shadow-sm hover:shadow-md;
   }
-  
+
   /* 3D Button Styles */
   .btn-3d {
-    @apply transition-all duration-100 shadow-[0_4px_0_0_rgb(29,78,216)] translate-y-0 active:translate-y-1 active:shadow-none;
+    @apply transition-all duration-100 shadow-[0_4px_0_0_#1d4ed8] translate-y-0 active:translate-y-1 active:shadow-none;
   }
 
   /* Glassmorphism */
   .glass {
     @apply bg-white/70 backdrop-blur-md border border-white/30;
+  }
+
+  .form-input {
+    @apply w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 bg-white shadow-sm text-slate-700 placeholder:text-slate-400;
   }
 }
 
