@@ -31,13 +31,41 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Server is running' });
 });
 
+// Socket.io Setup
+const http = require('http');
+const { Server } = require('socket.io');
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:3000",
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+});
+
+let connectedUsers = 0;
+
+io.on('connection', (socket) => {
+    connectedUsers++;
+    console.log(`User connected. Total: ${connectedUsers}`);
+    io.emit('activeUsers', connectedUsers);
+
+    socket.on('disconnect', () => {
+        connectedUsers = Math.max(0, connectedUsers - 1);
+        console.log(`User disconnected. Total: ${connectedUsers}`);
+        io.emit('activeUsers', connectedUsers);
+    });
+});
+
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`
   ╔════════════════════════════════════════════╗
   ║   🔍 College Lost & Found Backend          ║
   ║   Server running on port ${PORT}              ║
   ║   API: http://localhost:${PORT}/api           ║
+  ║   Socket.io: Enabled                       ║
   ╚════════════════════════════════════════════╝
   `);
 });
