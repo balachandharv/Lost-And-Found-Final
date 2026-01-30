@@ -58,7 +58,7 @@ function AdminDashboard() {
     <>
       <BackgroundBubbles />
       <PageTransition>
-        <div style={{ padding: "80px 20px 40px 20px", minHeight: "100vh" }}>
+        <div style={{ padding: "10px 20px 40px 20px", minHeight: "100vh" }}>
           <div className="container">
 
             {/* Header */}

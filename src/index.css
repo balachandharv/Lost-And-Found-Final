@@ -3,26 +3,49 @@
 @tailwind utilities;
 
 :root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary: #64748b;
-  --background: #f8fafc;
+  /* Pleasant/Soft Palette */
+  --primary: #818cf8;
+  /* Soft Indigo */
+  --primary-hover: #6366f1;
+  /* Slightly deeper on hover */
+  --secondary: #94a3b8;
+  /* Soft Slate */
+
+  --background: #fdfbf7;
+  /* Warm white / Cream */
   --surface: #ffffff;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
-  --danger: #ef4444;
-  --success: #22c55e;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius: 0.5rem;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --text-main: #334155;
+  /* Slate 700 - Softer than black */
+  --text-muted: #94a3b8;
+  /* Slate 400 */
+
+  --border: #f1f5f9;
+  /* Very light border */
+
+  --danger: #f87171;
+  /* Soft Red */
+  --success: #34d399;
+  /* Soft Emerald/Mint */
+  --warning: #fbbf24;
+  /* Soft Amber */
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.02);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+
+  --radius: 1rem;
+  /* More rounded, friendly corners */
+  --font-sans: 'Outfit', 'Inter', system-ui, sans-serif;
+  /* Setup for a friendlier font if available, fallback to Inter */
 }
 
 @layer base {
   body {
-    @apply font-sans text-slate-900 bg-slate-50 antialiased leading-normal;
+    @apply font-sans text-slate-900 bg-slate-50 antialiased leading-relaxed;
+    color: var(--text-main);
+    background-color: var(--background);
   }
 
   h1,
@@ -33,6 +56,18 @@
   h6 {
     @apply font-bold tracking-tight text-slate-900 mb-4;
   }
+
+  h1 {
+    @apply text-4xl lg:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl lg:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl lg:text-3xl;
+  }
 }
 
 @layer components {
@@ -40,65 +75,65 @@
     @apply max-w-7xl mx-auto px-4;
   }
 
+  /* Modern Card Style */
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-slate-200 p-6 transition-all duration-200 hover:shadow-md;
+    @apply bg-white rounded-xl border border-slate-100 p-6 transition-all duration-300;
+    box-shadow: var(--shadow-sm);
   }
 
+  .card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
+    /* Subtle border highlight on hover */
+    transform: translateY(-2px);
+  }
+
+  /* Professional Button Styles */
   .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-primary {
-    @apply bg-blue-600 text-white hover:bg-blue-700 hover:-translate-y-px shadow-sm hover:shadow-md;
+    @apply text-white shadow-md hover:shadow-lg hover:-translate-y-0.5;
+    background-color: var(--primary);
   }
 
-  /* 3D Button Styles */
-  .btn-3d {
-    @apply transition-all duration-100 shadow-[0_4px_0_0_#1d4ed8] translate-y-0 active:translate-y-1 active:shadow-none;
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
   }
 
-  /* Glassmorphism */
+  .btn-secondary {
+    @apply bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 shadow-sm;
+  }
+
+  .btn-success {
+    @apply bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm;
+  }
+
+  /* Glassmorphism - Refined */
   .glass {
-    @apply bg-white/70 backdrop-blur-md border border-white/30;
+    @apply bg-white/80 backdrop-blur-md border border-white/50 shadow-xl;
   }
 
   .form-input {
-    @apply w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 bg-white shadow-sm text-slate-700 placeholder:text-slate-400;
+    @apply w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all duration-200 bg-white text-slate-900 placeholder:text-slate-400 font-medium;
   }
 }
 
-/* Background Bubbles Animation - Keeping as custom CSS for now */
-.bubbles-container {
+/* Subtle Animated Background Gradient */
+.app-background {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   z-index: -1;
-  overflow: hidden;
-  background: linear-gradient(to bottom right, #eff6ff, #dbeafe);
-}
-
-.bubble {
-  position: absolute;
-  bottom: -100px;
-  background-color: rgba(37, 99, 235, 0.1);
-  border-radius: 50%;
-  animation: float-up 15s infinite ease-in-out;
-}
-
-@keyframes float-up {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: 0;
-  }
-
-  50% {
-    opacity: 0.6;
-  }
-
-  100% {
-    transform: translateY(-120vh) scale(1.2);
-    opacity: 0;
-  }
+  background:
+    radial-gradient(circle at 15% 50%, rgba(79, 70, 229, 0.08), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.08), transparent 25%);
+  pointer-events: none;
 }

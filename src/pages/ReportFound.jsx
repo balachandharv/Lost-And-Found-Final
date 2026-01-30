@@ -95,7 +95,7 @@ function ReportFound() {
     };
 
     return (
-        <div className="container" style={{ padding: "80px 1rem 2rem 1rem", maxWidth: "800px" }}>
+        <div className="container" style={{ padding: "30px 1rem 2rem 1rem", maxWidth: "800px" }}>
             <button
                 onClick={() => navigate(-1)}
                 style={{

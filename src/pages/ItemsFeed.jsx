@@ -81,7 +81,7 @@ function ItemsFeed() {
   }, [reports, searchQuery, currentFilter]);
 
   return (
-    <div className="container mx-auto px-4 py-8 min-h-screen pt-24">
+    <div className="container mx-auto px-4 py-8 min-h-screen">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
         <div className="text-center md:text-left">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Lost & Found Items</h1>
