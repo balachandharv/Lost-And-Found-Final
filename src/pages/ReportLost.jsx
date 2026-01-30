@@ -2,10 +2,15 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useReport } from "../context/ReportContext";
 import { useAuth } from "../context/AuthContext";
+import { ArrowLeft, Upload, X, AlertCircle } from 'lucide-react';
+import { motion } from "framer-motion";
+import PageTransition from "../components/PageTransition";
 
 function ReportLost() {
     const navigate = useNavigate();
     const { addReport } = useReport();
+    const { user } = useAuth();
+
     const [formData, setFormData] = useState({
         title: "",
         category: "",
@@ -48,9 +53,6 @@ function ReportLost() {
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
 
-        // Save to formData (in real app, this would be the file object, here we use the blob URL for demo persistence within session)
-        // Note: Blob URLs expire on reload, but for a session demo effectively mocks "uploading".
-        // To persist across reload in mock, we'd need base64. Let's try base64 for better persistence.
         const reader = new FileReader();
         reader.onloadend = () => {
             setFormData(prev => ({ ...prev, image: reader.result }));
@@ -58,22 +60,21 @@ function ReportLost() {
         reader.readAsDataURL(file);
     };
 
-    const { user } = useAuth();
-
     const handleSubmit = (e) => {
         e.preventDefault();
 
         const newReport = {
             id: "R" + (Math.floor(Math.random() * 9000) + 1000),
             item: formData.title,
-            image: formData.image, // Add image from state
+            category: formData.category, // Added category
+            image: formData.image,
             location: formData.location || "Unknown",
             type: "Lost",
-            reportedBy: user ? user.name : (formData.contact || "Student"), // Use authenticated name if available
-            reporterEmail: user?.email, // Store email for permission checks
+            reportedBy: user ? user.name : (formData.contact || "Student"),
+            reporterEmail: user?.email,
             reporterId: user ? user.id : null,
             date: formData.date || new Date().toISOString().split('T')[0],
-            status: "PendingApproval", // Requires Admin Approval
+            status: "PendingApproval",
             description: formData.description,
             contact: formData.contact
         };
@@ -81,217 +82,198 @@ function ReportLost() {
         addReport(newReport);
 
         alert("Item reported successfully! It will be listed after Admin approval.");
-        navigate("/items"); // Redirect to items feed or dashboard
+        navigate("/items");
     };
 
     return (
-        <div className="container" style={{ padding: "30px 1rem 2rem 1rem", maxWidth: "800px" }}>
-            <button
-                onClick={() => navigate(-1)}
-                style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    marginBottom: "1rem",
-                    color: "var(--text-muted)",
-                    background: "none",
-                    border: "none",
-                    fontSize: "0.9rem",
-                    cursor: "pointer",
-                    padding: 0
-                }}
-            >
-                ← Back
-            </button>
-            <div className="card">
-                <h1 style={{ color: "var(--danger)" }}>Report a Lost Item</h1>
-                <p style={{ marginBottom: "2rem" }}>
-                    Please provide as many details as possible to help us find your item.
-                </p>
+        <PageTransition>
+            <div className="min-h-screen py-10 px-4">
+                <div className="container-custom max-w-2xl mx-auto">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="inline-flex items-center text-slate-500 hover:text-indigo-600 font-medium mb-6 transition-colors"
+                    >
+                        <ArrowLeft size={18} className="mr-2" /> Back
+                    </button>
 
-                <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1.5rem" }}>
-                    {/* ... other fields ... */}
-                    {/* Simplified for the tool, I must include all fields or just the part I am replacing, but this is a large form. I will target the end of the form specifically or rewrite the whole form if needed. Better to target the specific upload section and `handleSubmit` changes? */}
-                    {/* Actually, I need to update state and handlers too. I will do a larger replace to be safe. */}
-
-                    <div style={{ display: "grid", gap: "0.5rem" }}>
-                        <label htmlFor="title" style={{ fontWeight: 500 }}>Item Name</label>
-                        <input
-                            type="text"
-                            id="title"
-                            name="title"
-                            placeholder="e.g. Blue Jansport Backpack"
-                            value={formData.title}
-                            onChange={handleChange}
-                            required
-                            className="form-input"
-                        />
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
-                        <div style={{ display: "grid", gap: "0.5rem" }}>
-                            <label htmlFor="category" style={{ fontWeight: 500 }}>Category</label>
-                            <select
-                                id="category"
-                                name="category"
-                                value={formData.category}
-                                onChange={handleChange}
-                                required
-                                className="form-input"
-                            >
-                                <option value="">Select a category</option>
-                                <option value="electronics">Electronics</option>
-                                <option value="clothing">Clothing</option>
-                                <option value="books">Books/Notes</option>
-                                <option value="accessories">Accessories</option>
-                                <option value="other">Other</option>
-                            </select>
+                    <motion.div
+                        className="card p-8"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                    >
+                        <div className="mb-8 border-b border-slate-100 pb-6">
+                            <h1 className="text-2xl font-bold text-red-600 mb-2">Report a Lost Item</h1>
+                            <p className="text-slate-500">
+                                Please provide as many details as possible to help us find your item.
+                            </p>
                         </div>
 
-                        <div style={{ display: "grid", gap: "0.5rem" }}>
-                            <label htmlFor="date" style={{ fontWeight: 500 }}>Date Lost</label>
-                            <input
-                                type="date"
-                                id="date"
-                                name="date"
-                                value={formData.date}
-                                onChange={handleChange}
-                                required
-                                className="form-input"
-                            />
-                        </div>
-                    </div>
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="space-y-1.5">
+                                <label htmlFor="title" className="block text-sm font-semibold text-slate-700">Item Name</label>
+                                <input
+                                    type="text"
+                                    id="title"
+                                    name="title"
+                                    placeholder="e.g. Blue Jansport Backpack"
+                                    value={formData.title}
+                                    onChange={handleChange}
+                                    required
+                                    className="form-input w-full"
+                                />
+                            </div>
 
-                    <div style={{ display: "grid", gap: "0.5rem" }}>
-                        <label htmlFor="location" style={{ fontWeight: 500 }}>Location Lost (if known)</label>
-                        <input
-                            type="text"
-                            id="location"
-                            name="location"
-                            placeholder="e.g. Near the main library entrance"
-                            value={formData.location}
-                            onChange={handleChange}
-                            className="form-input"
-                        />
-                    </div>
-
-                    <div style={{ display: "grid", gap: "0.5rem" }}>
-                        <label htmlFor="description" style={{ fontWeight: 500 }}>Description</label>
-                        <textarea
-                            id="description"
-                            name="description"
-                            rows="4"
-                            placeholder="Provide distinctive details like color, scratches, stickers, etc."
-                            value={formData.description}
-                            onChange={handleChange}
-                            required
-                            className="form-input"
-                        ></textarea>
-                    </div>
-
-                    <div style={{ display: "grid", gap: "0.5rem" }}>
-                        <label htmlFor="contact" style={{ fontWeight: 500 }}>Contact Email/Phone</label>
-                        <input
-                            type="text"
-                            id="contact"
-                            name="contact"
-                            placeholder="How can we reach you?"
-                            value={formData.contact}
-                            onChange={handleChange}
-                            required
-                            className="form-input"
-                        />
-                    </div>
-
-                    <div style={{ display: "grid", gap: "0.5rem" }}>
-                        <label style={{ fontWeight: 500 }}>Upload Image/Video (Optional)</label>
-
-                        <input
-                            type="file"
-                            id="fileUpload"
-                            accept="image/*,video/*"
-                            onChange={handleFileChange}
-                            style={{ display: "none" }}
-                        />
-
-                        <div
-                            onClick={() => document.getElementById('fileUpload').click()}
-                            style={{
-                                border: `2px dashed ${fileError ? 'var(--danger)' : 'var(--border)'}`,
-                                padding: "2rem",
-                                textAlign: "center",
-                                borderRadius: "var(--radius)",
-                                backgroundColor: "#f8fafc",
-                                cursor: "pointer",
-                                transition: "all 0.2s"
-                            }}
-                        >
-                            {previewUrl ? (
-                                <div style={{ position: "relative", width: "100%", height: "200px", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                                    {isImage ? (
-                                        <img src={previewUrl} alt="Preview" style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: "0.5rem", objectFit: "contain" }} />
-                                    ) : (
-                                        <video src={previewUrl} controls style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: "0.5rem" }} />
-                                    )}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setPreviewUrl(null);
-                                            setFormData(prev => ({ ...prev, image: null }));
-                                        }}
-                                        style={{
-                                            position: "absolute",
-                                            top: "-10px",
-                                            right: "-10px",
-                                            background: "var(--danger)",
-                                            color: "white",
-                                            border: "none",
-                                            borderRadius: "50%",
-                                            width: "24px",
-                                            height: "24px",
-                                            cursor: "pointer",
-                                            fontWeight: "bold"
-                                        }}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-1.5">
+                                    <label htmlFor="category" className="block text-sm font-semibold text-slate-700">Category</label>
+                                    <select
+                                        id="category"
+                                        name="category"
+                                        value={formData.category}
+                                        onChange={handleChange}
+                                        required
+                                        className="form-input w-full"
                                     >
-                                        ×
-                                    </button>
+                                        <option value="">Select a category</option>
+                                        <option value="electronics">Electronics</option>
+                                        <option value="clothing">Clothing</option>
+                                        <option value="books">Books/Notes</option>
+                                        <option value="keys">Keys/Cards</option>
+                                        <option value="accessories">Accessories</option>
+                                        <option value="other">Other</option>
+                                    </select>
                                 </div>
-                            ) : (
-                                <>
-                                    <p style={{ margin: 0, fontWeight: 500, color: "var(--primary)" }}>Click to upload Image or Video</p>
-                                    <p style={{ fontSize: "0.75rem", margin: "0.5rem 0 0 0", color: "var(--text-muted)" }}>
-                                        Max size: 5MB
-                                    </p>
-                                </>
-                            )}
-                        </div>
-                        {fileError && <p style={{ color: "var(--danger)", fontSize: "0.85rem", marginTop: "0.25rem" }}>{fileError}</p>}
-                    </div>
 
-                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "1rem" }}>
-                        <button type="button" className="btn-secondary" onClick={() => navigate(-1)}>Cancel</button>
-                        <button
-                            type="submit"
-                            disabled={!!fileError}
-                            className="btn-danger ios-btn"
-                            style={{
-                                minWidth: "150px",
-                                opacity: fileError ? 0.5 : 1,
-                                backgroundColor: "#ef4444",
-                                color: "white",
-                                padding: "0.75rem 1.5rem",
-                                borderRadius: "0.5rem",
-                                fontWeight: "600",
-                                border: "none",
-                                cursor: "pointer"
-                            }}
-                        >
-                            Submit Report
-                        </button>
-                    </div>
-                </form>
+                                <div className="space-y-1.5">
+                                    <label htmlFor="date" className="block text-sm font-semibold text-slate-700">Date Lost</label>
+                                    <input
+                                        type="date"
+                                        id="date"
+                                        name="date"
+                                        value={formData.date}
+                                        onChange={handleChange}
+                                        required
+                                        className="form-input w-full"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label htmlFor="location" className="block text-sm font-semibold text-slate-700">Location Lost (if known)</label>
+                                <input
+                                    type="text"
+                                    id="location"
+                                    name="location"
+                                    placeholder="e.g. Near the main library entrance"
+                                    value={formData.location}
+                                    onChange={handleChange}
+                                    className="form-input w-full"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label htmlFor="description" className="block text-sm font-semibold text-slate-700">Description</label>
+                                <textarea
+                                    id="description"
+                                    name="description"
+                                    rows="4"
+                                    placeholder="Provide distinctive details like color, scratches, stickers, etc."
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                    required
+                                    className="form-input w-full resize-y"
+                                ></textarea>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label htmlFor="contact" className="block text-sm font-semibold text-slate-700">Contact Email/Phone</label>
+                                <input
+                                    type="text"
+                                    id="contact"
+                                    name="contact"
+                                    placeholder="How can we reach you?"
+                                    value={formData.contact}
+                                    onChange={handleChange}
+                                    required
+                                    className="form-input w-full"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-slate-700">Upload Image/Video (Optional)</label>
+
+                                <input
+                                    type="file"
+                                    id="fileUpload"
+                                    accept="image/*,video/*"
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                />
+
+                                <div
+                                    onClick={() => document.getElementById('fileUpload').click()}
+                                    className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${fileError ? 'border-red-300 bg-red-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-indigo-400'
+                                        }`}
+                                >
+                                    {previewUrl ? (
+                                        <div className="relative flex justify-center items-center h-48">
+                                            {isImage ? (
+                                                <img src={previewUrl} alt="Preview" className="max-w-full max-h-full rounded-lg object-contain shadow-sm" />
+                                            ) : (
+                                                <video src={previewUrl} controls className="max-w-full max-h-full rounded-lg shadow-sm" />
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPreviewUrl(null);
+                                                    setFormData(prev => ({ ...prev, image: null }));
+                                                }}
+                                                className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center text-slate-500">
+                                            <div className="bg-white p-3 rounded-full shadow-sm mb-3">
+                                                <Upload size={24} className="text-indigo-500" />
+                                            </div>
+                                            <p className="font-medium text-slate-700">Click to upload Image or Video</p>
+                                            <p className="text-xs text-slate-400 mt-1">Max size: 5MB</p>
+                                        </div>
+                                    )}
+                                </div>
+                                {fileError && (
+                                    <div className="flex items-center text-red-600 text-sm mt-1">
+                                        <AlertCircle size={16} className="mr-1.5" /> {fileError}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => navigate(-1)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={!!fileError}
+                                    className={`btn btn-primary bg-red-600 hover:bg-red-700 text-white shadow-red-200 ${fileError ? 'opacity-50 cursor-not-allowed' : ''
+                                        }`}
+                                >
+                                    Submit Report
+                                </button>
+                            </div>
+                        </form>
+                    </motion.div>
+                </div>
             </div>
-        </div>
+        </PageTransition>
     );
 }
 

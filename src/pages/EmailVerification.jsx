@@ -5,6 +5,7 @@ import PageTransition from "../components/PageTransition";
 import BackgroundBubbles from "../components/BackgroundBubbles";
 import Loader from "../components/Loader";
 import { useAuth } from "../context/AuthContext";
+import { Mail, ArrowRight, AlertTriangle, CheckCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 
 function EmailVerification() {
     const navigate = useNavigate();
@@ -132,39 +133,29 @@ function EmailVerification() {
         <>
             <BackgroundBubbles />
             <PageTransition>
-                <div style={{
-                    minHeight: "80vh",
-                    display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem"
-                }}>
+                <div className="min-h-screen flex items-center justify-center p-4">
                     <motion.div
-                        className="glass"
+                        className="bg-white/90 backdrop-blur-lg border border-white/50 shadow-2xl rounded-3xl w-full max-w-md p-8 md:p-10 relative overflow-hidden"
                         initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ duration: 0.4 }}
-                        style={{
-                            width: "100%", maxWidth: "420px",
-                            padding: "2.5rem", borderRadius: "1.5rem",
-                            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.08)",
-                            border: "1px solid rgba(255, 255, 255, 0.5)",
-                            background: "rgba(255, 255, 255, 0.92)"
-                        }}
                     >
                         {loading ? (
-                            <div style={{ padding: "2rem 0" }}>
+                            <div className="py-12">
                                 <Loader text="Verifying..." />
                             </div>
                         ) : (
                             <div>
-                                <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-                                    <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>
-                                        ✉️
+                                <div className="text-center mb-10">
+                                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 text-indigo-600 mb-6 shadow-sm">
+                                        <Mail size={32} />
                                     </div>
-                                    <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#1e293b", marginBottom: "0.25rem" }}>
+                                    <h2 className="text-2xl font-bold text-slate-800 mb-2">
                                         Verify Email
                                     </h2>
-                                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                                    <p className="text-slate-500 text-sm">
                                         We sent a code to <br />
-                                        <span style={{ fontWeight: 600, color: "#0f172a" }}>{email}</span>
+                                        <span className="font-bold text-slate-900">{email}</span>
                                     </p>
                                 </div>
 
@@ -172,13 +163,9 @@ function EmailVerification() {
                                     <motion.div
                                         initial={{ opacity: 0, y: -10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        style={{
-                                            color: "#dc2626", fontSize: "0.875rem", marginBottom: "1rem",
-                                            background: "#fef2f2", padding: "0.75rem", borderRadius: "0.5rem",
-                                            textAlign: "center"
-                                        }}
+                                        className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-center gap-3 text-center justify-center"
                                     >
-                                        ⚠️ {error}
+                                        <AlertTriangle size={18} /> {error}
                                     </motion.div>
                                 )}
 
@@ -186,17 +173,13 @@ function EmailVerification() {
                                     <motion.div
                                         initial={{ opacity: 0, y: -10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        style={{
-                                            color: "#16a34a", fontSize: "0.875rem", marginBottom: "1rem",
-                                            background: "#f0fdf4", padding: "0.75rem", borderRadius: "0.5rem",
-                                            textAlign: "center"
-                                        }}
+                                        className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-600 text-sm flex items-center gap-3 text-center justify-center"
                                     >
-                                        ✅ {success}
+                                        <CheckCircle size={18} /> {success}
                                     </motion.div>
                                 )}
 
-                                <div style={{ display: "flex", justifyContent: "center", gap: "0.5rem", marginBottom: "1.5rem" }}>
+                                <div className="flex justify-center gap-2 mb-8">
                                     {otp.map((data, index) => (
                                         <input
                                             key={index}
@@ -207,13 +190,7 @@ function EmailVerification() {
                                             onKeyDown={(e) => handleKeyDown(e, index)}
                                             onPaste={handlePaste}
                                             onFocus={(e) => e.target.select()}
-                                            style={{
-                                                width: "3rem", height: "3.5rem",
-                                                textAlign: "center", fontSize: "1.25rem", fontWeight: "bold",
-                                                borderRadius: "0.75rem", border: "1px solid #e2e8f0",
-                                                outline: "none", backgroundColor: "#f8fafc", color: "#334155",
-                                                transition: "all 0.2s"
-                                            }}
+                                            className="w-12 h-14 text-center text-xl font-bold rounded-xl border border-slate-200 outline-none bg-slate-50 text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-sm"
                                         />
                                     ))}
                                 </div>
@@ -222,43 +199,33 @@ function EmailVerification() {
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={handleVerify}
-                                    style={{
-                                        width: "100%", padding: "0.875rem 1rem",
-                                        background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-                                        color: "white", border: "none", borderRadius: "0.75rem",
-                                        cursor: "pointer", fontSize: "0.95rem", fontWeight: 600,
-                                        boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)"
-                                    }}
+                                    className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-all"
                                 >
-                                    Verify Code
+                                    Verify Code <ArrowRight size={18} />
                                 </motion.button>
 
-                                <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
-                                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                                <div className="mt-8 text-center">
+                                    <p className="text-sm text-slate-500 mb-4">
                                         Didn't receive the code?{" "}
                                         <button
                                             onClick={handleResend}
                                             disabled={timer > 0}
-                                            style={{
-                                                background: "none", border: "none",
-                                                color: timer > 0 ? "#94a3b8" : "#2563eb",
-                                                cursor: timer > 0 ? "default" : "pointer",
-                                                fontWeight: 600
-                                            }}
+                                            className={`font-semibold flex items-center justify-center gap-1 mx-auto mt-1 ${timer > 0 ? 'text-slate-400 cursor-default' : 'text-indigo-600 hover:text-indigo-700'
+                                                }`}
                                         >
-                                            {timer > 0 ? `Resend in ${timer}s` : "Resend"}
+                                            {timer > 0 ? (
+                                                <>Resend in {timer}s</>
+                                            ) : (
+                                                <><RefreshCw size={14} /> Resend Now</>
+                                            )}
                                         </button>
                                     </p>
+
                                     <button
                                         onClick={() => navigate("/login")}
-                                        style={{
-                                            background: "none", border: "none",
-                                            color: "#64748b", fontSize: "0.875rem",
-                                            marginTop: "1rem", cursor: "pointer",
-                                            textDecoration: "underline"
-                                        }}
+                                        className="text-slate-400 hover:text-slate-600 text-sm font-medium flex items-center justify-center gap-2 mx-auto transition-colors"
                                     >
-                                        Back to Login
+                                        <ArrowLeft size={16} /> Back to Login
                                     </button>
                                 </div>
                             </div>

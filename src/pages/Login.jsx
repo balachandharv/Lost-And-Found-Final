@@ -5,6 +5,7 @@ import PageTransition from "../components/PageTransition";
 import BackgroundBubbles from "../components/BackgroundBubbles";
 import Loader from "../components/Loader";
 import { useAuth } from "../context/AuthContext";
+import { Lock, Mail, User, Eye, EyeOff, CheckCircle, AlertTriangle, ArrowRight, ArrowLeft } from 'lucide-react';
 
 function Login() {
     const navigate = useNavigate();
@@ -125,6 +126,7 @@ function Login() {
             setError(emailValidation.message);
             setLoading(false);
             return;
+            // Allow admin signup for now if it's the specific email, logic handled in validateCollegeEmail
         }
 
         if (password.length < 6) {
@@ -250,53 +252,20 @@ function Login() {
         setLoading(false);
     };
 
-    // Input styles
-    const inputStyle = {
-        width: "100%",
-        padding: "0.875rem 1rem",
-        backgroundColor: "#f8fafc",
-        border: "1px solid #e2e8f0",
-        borderRadius: "0.75rem",
-        fontSize: "0.95rem",
-        color: "#334155",
-        outline: "none",
-        transition: "border-color 0.2s, box-shadow 0.2s"
-    };
-
-    const handleInputFocus = (e) => {
-        e.target.style.borderColor = "#2563eb";
-        e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
-    };
-
-    const handleInputBlur = (e) => {
-        e.target.style.borderColor = "#e2e8f0";
-        e.target.style.boxShadow = "none";
-    };
-
     return (
         <>
             <BackgroundBubbles />
             <PageTransition>
-                <div style={{
-                    minHeight: "80vh",
-                    display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem"
-                }}>
+                <div className="min-h-screen flex items-center justify-center p-4">
                     <motion.div
-                        className="glass"
+                        className="bg-white/90 backdrop-blur-lg border border-white/50 shadow-2xl rounded-3xl w-full max-w-md p-8 md:p-10 relative overflow-hidden"
                         initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ duration: 0.4 }}
-                        style={{
-                            width: "100%", maxWidth: "420px",
-                            padding: "2.5rem", borderRadius: "1.5rem",
-                            boxShadow: "0 10px 30px rgba(0, 0, 0, 0.08)",
-                            border: "1px solid rgba(255, 255, 255, 0.5)",
-                            background: "rgba(255, 255, 255, 0.92)"
-                        }}
                     >
                         <AnimatePresence mode="wait">
                             {loading ? (
-                                <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ padding: "2rem 0" }}>
+                                <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-12">
                                     <Loader text={
                                         isForgotPassword ? "Processing..." :
                                             isSignUp ? "Creating account..." : "Signing in..."
@@ -309,12 +278,14 @@ function Login() {
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
                                 >
-                                    <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-                                        <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🔐</div>
-                                        <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#1e293b", marginBottom: "0.25rem" }}>
+                                    <div className="text-center mb-8">
+                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 text-indigo-600 mb-4">
+                                            <Lock size={32} />
+                                        </div>
+                                        <h2 className="text-2xl font-bold text-slate-800 mb-2">
                                             {resetStep === 1 ? "Forgot Password?" : "Reset Password"}
                                         </h2>
-                                        <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                                        <p className="text-slate-500 text-sm">
                                             {resetStep === 1
                                                 ? "Enter your email to receive a reset code"
                                                 : "Enter the code sent to your email"}
@@ -322,109 +293,93 @@ function Login() {
                                     </div>
 
                                     {error && (
-                                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{
-                                            color: "#dc2626", fontSize: "0.875rem", marginBottom: "1rem", background: "#fef2f2",
-                                            padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #fecaca", textAlign: "center"
-                                        }}>
-                                            ⚠️ {error}
+                                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-center gap-3">
+                                            <AlertTriangle size={18} /> {error}
                                         </motion.div>
                                     )}
 
                                     {success && (
-                                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{
-                                            color: "#16a34a", fontSize: "0.875rem", marginBottom: "1rem", background: "#f0fdf4",
-                                            padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid #bbf7d0", textAlign: "center"
-                                        }}>
-                                            ✅ {success}
+                                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-600 text-sm flex items-center gap-3">
+                                            <CheckCircle size={18} /> {success}
                                         </motion.div>
                                     )}
 
-                                    <form onSubmit={resetStep === 1 ? handleRequestResetOtp : handleResetPassword} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                                    <form onSubmit={resetStep === 1 ? handleRequestResetOtp : handleResetPassword} className="space-y-5">
 
                                         {/* Step 1: Email Only */}
-                                        <div style={{ display: resetStep === 1 ? 'block' : 'none' }}>
-                                            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: "0.5rem" }}>
+                                        <div className={resetStep === 1 ? 'block' : 'hidden'}>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
                                                 College Email ID
                                             </label>
-                                            <input
-                                                type="email"
-                                                placeholder="23itXXX@psr.edu.in"
-                                                required={resetStep === 1}
-                                                value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                                style={inputStyle}
-                                                onFocus={handleInputFocus}
-                                                onBlur={handleInputBlur}
-                                            />
+                                            <div className="relative">
+                                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <input
+                                                    type="email"
+                                                    placeholder="23itXXX@psr.edu.in"
+                                                    required={resetStep === 1}
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-medium"
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* Step 2: OTP and New Password */}
                                         {resetStep === 2 && (
                                             <>
                                                 <div>
-                                                    <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: "0.5rem" }}>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-2">
                                                         Enter OTP Code
                                                     </label>
                                                     <input
                                                         type="text"
-                                                        placeholder="Enter OTP code"
+                                                        placeholder="Enter OTP"
                                                         required
                                                         value={otp}
                                                         onChange={(e) => setOtp(e.target.value)}
-                                                        style={{ ...inputStyle, textAlign: 'center', letterSpacing: '0.2rem', fontWeight: 'bold' }}
-                                                        onFocus={handleInputFocus}
-                                                        onBlur={handleInputBlur}
+                                                        className="w-full text-center tracking-widest font-bold text-lg py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
                                                     />
                                                 </div>
 
                                                 <div>
-                                                    <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: "0.5rem" }}>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-2">
                                                         New Password
                                                     </label>
-                                                    <div style={{ position: "relative" }}>
+                                                    <div className="relative">
+                                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                         <input
                                                             type={showPassword ? "text" : "password"}
-                                                            placeholder="New password (min 6 chars)"
+                                                            placeholder="Min 6 characters"
                                                             required
                                                             value={password}
                                                             onChange={(e) => setPassword(e.target.value)}
-                                                            style={{ ...inputStyle, paddingRight: "3rem" }}
-                                                            onFocus={handleInputFocus}
-                                                            onBlur={handleInputBlur}
+                                                            className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-medium"
                                                         />
-                                                        <button type="button" onClick={() => setShowPassword(!showPassword)} style={{
-                                                            position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)",
-                                                            background: "none", border: "none", cursor: "pointer", color: "#64748b",
-                                                            display: "flex", alignItems: "center"
-                                                        }}>
-                                                            {showPassword ? (
-                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: "1.25rem", height: "1.25rem" }}>
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                                                                </svg>
-                                                            ) : (
-                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: "1.25rem", height: "1.25rem" }}>
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                </svg>
-                                                            )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowPassword(!showPassword)}
+                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
+                                                        >
+                                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                                         </button>
                                                     </div>
                                                 </div>
 
                                                 <div>
-                                                    <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: "0.5rem" }}>
-                                                        Confirm New Password
+                                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                        Confirm Password
                                                     </label>
-                                                    <input
-                                                        type="password"
-                                                        placeholder="Confirm new password"
-                                                        required
-                                                        value={confirmPassword}
-                                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                                        style={inputStyle}
-                                                        onFocus={handleInputFocus}
-                                                        onBlur={handleInputBlur}
-                                                    />
+                                                    <div className="relative">
+                                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                        <input
+                                                            type="password"
+                                                            placeholder="Confirm new password"
+                                                            required
+                                                            value={confirmPassword}
+                                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-medium"
+                                                        />
+                                                    </div>
                                                 </div>
                                             </>
                                         )}
@@ -433,19 +388,13 @@ function Login() {
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                             type="submit"
-                                            style={{
-                                                width: "100%", padding: "0.875rem 1rem",
-                                                background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-                                                color: "white", border: "none", borderRadius: "0.75rem",
-                                                cursor: "pointer", fontSize: "0.95rem", fontWeight: 600,
-                                                marginTop: "0.5rem", boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)"
-                                            }}
+                                            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-all"
                                         >
-                                            {resetStep === 1 ? "Send Reset Code" : "Reset Password"}
+                                            {resetStep === 1 ? "Send Reset Code" : "Reset Password"} <ArrowRight size={18} />
                                         </motion.button>
                                     </form>
 
-                                    <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
+                                    <div className="mt-8 text-center border-t border-slate-100 pt-6">
                                         <button
                                             onClick={() => {
                                                 setIsForgotPassword(false);
@@ -453,12 +402,9 @@ function Login() {
                                                 setError("");
                                                 setSuccess("");
                                             }}
-                                            style={{
-                                                background: "none", border: "none", color: "#64748b",
-                                                fontSize: "0.875rem", cursor: "pointer", textDecoration: "underline"
-                                            }}
+                                            className="text-slate-500 hover:text-indigo-600 text-sm font-medium flex items-center justify-center gap-2 mx-auto transition-colors"
                                         >
-                                            Back to Sign In
+                                            <ArrowLeft size={16} /> Back to Sign In
                                         </button>
                                     </div>
                                 </motion.div>
@@ -470,19 +416,15 @@ function Login() {
                                     exit={{ opacity: 0 }}
                                 >
                                     {/* Header */}
-                                    <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-                                        <div style={{
-                                            fontSize: "2.5rem",
-                                            marginBottom: "0.75rem",
-                                            filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
-                                        }}>
+                                    <div className="text-center mb-8">
+                                        <div className="text-4xl mb-4">
                                             {isSignUp ? "✨" : "🔍"}
                                         </div>
-                                        <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#1e293b", marginBottom: "0.25rem" }}>
+                                        <h2 className="text-2xl font-bold text-slate-900 mb-2">
                                             {isSignUp ? "Create Account" : "Welcome Back"}
                                         </h2>
-                                        <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
-                                            {isSignUp ? "Join the Lost & Found community" : "Sign in to your account"}
+                                        <p className="text-slate-500 text-sm">
+                                            {isSignUp ? "Join the Lost & Found community" : "Sign in to your account to continue"}
                                         </p>
                                     </div>
 
@@ -491,18 +433,9 @@ function Login() {
                                         <motion.div
                                             initial={{ opacity: 0, y: -10 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            style={{
-                                                color: "#dc2626",
-                                                fontSize: "0.875rem",
-                                                marginBottom: "1rem",
-                                                background: "#fef2f2",
-                                                padding: "0.75rem",
-                                                borderRadius: "0.5rem",
-                                                border: "1px solid #fecaca",
-                                                textAlign: "center"
-                                            }}
+                                            className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-center gap-3"
                                         >
-                                            ⚠️ {error}
+                                            <AlertTriangle size={18} /> {error}
                                         </motion.div>
                                     )}
 
@@ -511,112 +444,65 @@ function Login() {
                                         <motion.div
                                             initial={{ opacity: 0, y: -10 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            style={{
-                                                color: "#16a34a",
-                                                fontSize: "0.875rem",
-                                                marginBottom: "1rem",
-                                                background: "#f0fdf4",
-                                                padding: "0.75rem",
-                                                borderRadius: "0.5rem",
-                                                border: "1px solid #bbf7d0",
-                                                textAlign: "center"
-                                            }}
+                                            className="mb-6 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-600 text-sm flex items-center gap-3"
                                         >
-                                            ✅ {success}
+                                            <CheckCircle size={18} /> {success}
                                         </motion.div>
                                     )}
 
                                     {/* Form */}
-                                    <form onSubmit={isSignUp ? handleSignUp : handleSignIn} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                                    <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
 
                                         {/* Name Field (Sign Up only) */}
                                         {isSignUp && (
                                             <div>
-                                                <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: "0.5rem" }}>
+                                                <label className="block text-sm font-medium text-slate-700 mb-1.5">
                                                     Full Name
                                                 </label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Enter your full name"
-                                                    required
-                                                    value={name}
-                                                    onChange={(e) => setName(e.target.value)}
-                                                    style={inputStyle}
-                                                    onFocus={handleInputFocus}
-                                                    onBlur={handleInputBlur}
-                                                />
+                                                <div className="relative">
+                                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="John Doe"
+                                                        required
+                                                        value={name}
+                                                        onChange={(e) => setName(e.target.value)}
+                                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-medium"
+                                                    />
+                                                </div>
                                             </div>
                                         )}
 
                                         {/* Email Field */}
                                         <div>
-                                            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: "0.5rem" }}>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1.5">
                                                 College Email ID
                                             </label>
-                                            <input
-                                                type="email"
-                                                placeholder={isSignUp ? "23itXXX@psr.edu.in" : "Enter your college email"}
-                                                required
-                                                value={email}
-                                                onChange={(e) => setEmail(e.target.value)}
-                                                style={inputStyle}
-                                                onFocus={handleInputFocus}
-                                                onBlur={handleInputBlur}
-                                            />
+                                            <div className="relative">
+                                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <input
+                                                    type="email"
+                                                    placeholder={isSignUp ? "23itXXX@psr.edu.in" : "23itXXX@psr.edu.in"}
+                                                    required
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-medium"
+                                                />
+                                            </div>
                                             {isSignUp && (
-                                                <p style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.25rem" }}>
-                                                    Only PSR college IDs (23IT001-23IT030) are allowed
+                                                <p className="text-xs text-slate-400 mt-1.5 ml-1">
+                                                    Only PSR college IDs (23IT001-23IT030) allowed
                                                 </p>
                                             )}
                                         </div>
 
                                         {/* Password Field */}
                                         <div>
-                                            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: "0.5rem" }}>
-                                                Password
-                                            </label>
-                                            <div style={{ position: "relative" }}>
-                                                <input
-                                                    type={showPassword ? "text" : "password"}
-                                                    placeholder={isSignUp ? "Create a password (min 6 chars)" : "Enter your password"}
-                                                    required
-                                                    value={password}
-                                                    onChange={(e) => setPassword(e.target.value)}
-                                                    style={{ ...inputStyle, paddingRight: "3rem" }}
-                                                    onFocus={handleInputFocus}
-                                                    onBlur={handleInputBlur}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                    style={{
-                                                        position: "absolute",
-                                                        right: "12px",
-                                                        top: "50%",
-                                                        transform: "translateY(-50%)",
-                                                        background: "none",
-                                                        border: "none",
-                                                        cursor: "pointer",
-                                                        color: "#64748b",
-                                                        padding: "4px",
-                                                        display: "flex",
-                                                        alignItems: "center"
-                                                    }}
-                                                >
-                                                    {showPassword ? (
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: "1.25rem", height: "1.25rem" }}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                                                        </svg>
-                                                    ) : (
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: "1.25rem", height: "1.25rem" }}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        </svg>
-                                                    )}
-                                                </button>
-                                            </div>
-                                            {!isSignUp && (
-                                                <div style={{ textAlign: "right", marginTop: "0.5rem" }}>
+                                            <div className="flex justify-between items-center mb-1.5">
+                                                <label className="text-sm font-medium text-slate-700">
+                                                    Password
+                                                </label>
+                                                {!isSignUp && (
                                                     <button
                                                         type="button"
                                                         onClick={() => {
@@ -625,65 +511,54 @@ function Login() {
                                                             setError("");
                                                             setSuccess("");
                                                         }}
-                                                        style={{
-                                                            background: "none",
-                                                            border: "none",
-                                                            color: "#2563eb",
-                                                            fontSize: "0.8rem",
-                                                            cursor: "pointer",
-                                                            fontWeight: 500
-                                                        }}
+                                                        className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
                                                     >
                                                         Forgot Password?
                                                     </button>
-                                                </div>
-                                            )}
+                                                )}
+                                            </div>
+                                            <div className="relative">
+                                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    placeholder={isSignUp ? "Min 6 characters" : "••••••••"}
+                                                    required
+                                                    value={password}
+                                                    onChange={(e) => setPassword(e.target.value)}
+                                                    className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-medium"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
+                                                >
+                                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                </button>
+                                            </div>
                                         </div>
 
                                         {/* Confirm Password (Sign Up only) */}
                                         {isSignUp && (
                                             <div>
-                                                <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 500, color: "#374151", marginBottom: "0.5rem" }}>
+                                                <label className="block text-sm font-medium text-slate-700 mb-1.5">
                                                     Confirm Password
                                                 </label>
-                                                <div style={{ position: "relative" }}>
+                                                <div className="relative">
+                                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                     <input
                                                         type={showConfirmPassword ? "text" : "password"}
-                                                        placeholder="Confirm your password"
+                                                        placeholder="Confirm password"
                                                         required
                                                         value={confirmPassword}
                                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                                        style={{ ...inputStyle, paddingRight: "3rem" }}
-                                                        onFocus={handleInputFocus}
-                                                        onBlur={handleInputBlur}
+                                                        className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-medium"
                                                     />
                                                     <button
                                                         type="button"
                                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                        style={{
-                                                            position: "absolute",
-                                                            right: "12px",
-                                                            top: "50%",
-                                                            transform: "translateY(-50%)",
-                                                            background: "none",
-                                                            border: "none",
-                                                            cursor: "pointer",
-                                                            color: "#64748b",
-                                                            padding: "4px",
-                                                            display: "flex",
-                                                            alignItems: "center"
-                                                        }}
+                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
                                                     >
-                                                        {showConfirmPassword ? (
-                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: "1.25rem", height: "1.25rem" }}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                                                            </svg>
-                                                        ) : (
-                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: "1.25rem", height: "1.25rem" }}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                            </svg>
-                                                        )}
+                                                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                                     </button>
                                                 </div>
                                             </div>
@@ -694,81 +569,41 @@ function Login() {
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                             type="submit"
-                                            style={{
-                                                width: "100%",
-                                                padding: "0.875rem 1rem",
-                                                background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-                                                color: "white",
-                                                border: "none",
-                                                borderRadius: "0.75rem",
-                                                cursor: "pointer",
-                                                fontSize: "0.95rem",
-                                                fontWeight: 600,
-                                                marginTop: "0.5rem",
-                                                boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)"
-                                            }}
+                                            className="w-full mt-2 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-all"
                                         >
-                                            {isSignUp ? "Create Account" : "Sign In"}
+                                            {isSignUp ? (
+                                                <>Create Account <ArrowRight size={18} /></>
+                                            ) : (
+                                                <>Sign In <ArrowRight size={18} /></>
+                                            )}
                                         </motion.button>
                                     </form>
 
                                     {/* OTP Login Option */}
                                     {!isSignUp && (
-                                        <div style={{ marginTop: "1.25rem" }}>
-                                            <div style={{
-                                                display: "flex", alignItems: "center", gap: "0.5rem",
-                                                marginBottom: "1.25rem", color: "#94a3b8", fontSize: "0.8rem"
-                                            }}>
-                                                <div style={{ flex: 1, height: "1px", background: "#e2e8f0" }}></div>
-                                                <span>OR</span>
-                                                <div style={{ flex: 1, height: "1px", background: "#e2e8f0" }}></div>
+                                        <div className="mt-6">
+                                            <div className="relative flex py-2 items-center">
+                                                <div className="flex-grow border-t border-slate-200"></div>
+                                                <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase font-semibold">Or</span>
+                                                <div className="flex-grow border-t border-slate-200"></div>
                                             </div>
 
-                                            <motion.button
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
+                                            <button
                                                 type="button"
                                                 onClick={handleOtpLogin}
-                                                style={{
-                                                    width: "100%",
-                                                    padding: "0.875rem 1rem",
-                                                    background: "white",
-                                                    color: "#334155",
-                                                    border: "1px solid #cbd5e1",
-                                                    borderRadius: "0.75rem",
-                                                    cursor: "pointer",
-                                                    fontSize: "0.95rem",
-                                                    fontWeight: 600,
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    gap: "0.5rem",
-                                                    transition: "background 0.2s"
-                                                }}
+                                                className="w-full py-3 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm mt-2"
                                             >
-                                                <span>📧</span> Sign in with Email OTP
-                                            </motion.button>
+                                                <Mail size={16} /> Sign in with Email OTP
+                                            </button>
                                         </div>
                                     )}
 
                                     {/* Switch between Sign In / Sign Up */}
-                                    <div style={{
-                                        marginTop: "1.5rem",
-                                        textAlign: "center",
-                                        fontSize: "0.9rem",
-                                        color: "#64748b"
-                                    }}>
+                                    <div className="mt-8 text-center text-sm text-slate-500">
                                         {isSignUp ? "Already have an account? " : "Don't have an account? "}
                                         <button
                                             onClick={switchMode}
-                                            style={{
-                                                background: "none",
-                                                border: "none",
-                                                color: "#2563eb",
-                                                fontWeight: 600,
-                                                cursor: "pointer",
-                                                textDecoration: "underline"
-                                            }}
+                                            className="text-indigo-600 font-bold hover:underline hover:text-indigo-700"
                                         >
                                             {isSignUp ? "Sign In" : "Sign Up"}
                                         </button>

@@ -3,22 +3,21 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useReport } from "../context/ReportContext";
 import { useAuth } from "../context/AuthContext";
+import { Search, Package, MapPin, Calendar, HelpCircle, Filter, X } from "lucide-react";
 
 function ItemsFeed() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { reports, deleteReport, markAsRetrieved } = useReport();
-  const { user } = useAuth(); // To check for Admin role
+  const { reports } = useReport();
+  const { user } = useAuth();
 
   const currentFilter = searchParams.get("filter") || "all";
+  const currentCategory = searchParams.get("category") || "all";
   const searchQuery = searchParams.get("search") || "";
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
   };
 
   const itemVariants = {
@@ -27,256 +26,270 @@ function ItemsFeed() {
   };
 
   const handleFilterChange = (newFilter) => {
-    if (newFilter === "all") {
-      searchParams.delete("filter");
-    } else {
-      searchParams.set("filter", newFilter);
-    }
+    if (newFilter === "all") searchParams.delete("filter");
+    else searchParams.set("filter", newFilter);
     setSearchParams(searchParams);
   };
 
-  // Filter items
-  // Filter items with memoization for performance
+  const handleCategoryChange = (newCategory) => {
+    if (newCategory === "all") searchParams.delete("category");
+    else searchParams.set("category", newCategory);
+    setSearchParams(searchParams);
+  };
+
+  const clearFilters = () => {
+    setSearchParams({});
+  };
+
   const filteredItems = React.useMemo(() => {
     const seenIds = new Set();
     const retrievedStatuses = ["Retrieved", "Returned", "Resolved", "Brought Back"];
 
     return reports.filter(item => {
-      // 1. Check Search
+      // 1. Search Query
       const matchesSearch = (item.item && item.item.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.location && item.location.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      // 2. Check Approval
+      // 2. Approval Status (Only show approved or active items)
       const isApproved = item.status !== "PendingApproval";
 
-      // 3. Check Filter Logic
-      let matchesFilter = false;
-
+      // 3. Type/Status Filter
+      let matchesType = false;
       if (currentFilter === "retrieved") {
-        // Show items marked as Retrieved, Returned, or Resolved
-        matchesFilter = retrievedStatuses.includes(item.status);
+        matchesType = retrievedStatuses.includes(item.status);
       } else {
-        // For All, Lost, Found -> Exclude active retrieval statuses
-        if (retrievedStatuses.includes(item.status)) {
-          matchesFilter = false;
-        } else if (currentFilter === "all") {
-          matchesFilter = true;
-        } else {
-          matchesFilter = item.type.toLowerCase() === currentFilter.toLowerCase();
-        }
+        if (retrievedStatuses.includes(item.status)) matchesType = false; // Hide retrieved items from main feeds
+        else if (currentFilter === "all") matchesType = true;
+        else matchesType = item.type.toLowerCase() === currentFilter.toLowerCase();
       }
 
-      // 4. Check Deduplication
-      if (matchesFilter && matchesSearch && isApproved) {
-        if (seenIds.has(item.id)) {
-          return false;
-        }
+      // 4. Category Filter
+      let matchesCategory = false;
+      if (currentCategory === "all") matchesCategory = true;
+      else matchesCategory = item.category && item.category.toLowerCase() === currentCategory.toLowerCase();
+
+      if (matchesType && matchesCategory && matchesSearch && isApproved) {
+        if (seenIds.has(item.id)) return false;
         seenIds.add(item.id);
         return true;
       }
-
       return false;
     });
-  }, [reports, searchQuery, currentFilter]);
+  }, [reports, searchQuery, currentFilter, currentCategory]);
+
+  const categories = [
+    { id: "all", label: "All Categories" },
+    { id: "electronics", label: "Electronics" },
+    { id: "clothing", label: "Clothing" },
+    { id: "books", label: "Books" },
+    { id: "keys", label: "Keys/Cards" },
+    { id: "accessories", label: "Accessories" },
+    { id: "other", label: "Other" }
+  ];
 
   return (
-    <div className="container mx-auto px-4 py-8 min-h-screen">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
-        <div className="text-center md:text-left">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Lost & Found Items</h1>
-          <p className="text-slate-500">
-            {searchQuery ? `Search results for "${searchQuery}"` : "Browse reported items or filter by category."}
-          </p>
-        </div>
-        <div className="flex gap-4">
-          <Link to="/report-lost">
-            <button className="px-6 py-3 rounded-xl bg-red-500 text-white font-semibold shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all">
-              Report Lost Item
-            </button>
-          </Link>
-          <Link to="/report-found">
-            <button className="px-6 py-3 rounded-xl bg-green-500 text-white font-semibold shadow-lg shadow-green-500/20 hover:scale-105 active:scale-95 transition-all">
-              Report Found Item
-            </button>
-          </Link>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50 py-12">
+      <div className="container-custom">
 
-      <div className="mb-8 flex flex-wrap gap-2 p-2 bg-white rounded-xl shadow-sm w-fit mx-auto md:mx-0 border border-slate-100">
-        <FilterButton
-          active={currentFilter === "all"}
-          onClick={() => handleFilterChange("all")}
-          label="All Active"
-        />
-        <FilterButton
-          active={currentFilter === "lost"}
-          onClick={() => handleFilterChange("lost")}
-          label="Lost Items"
-          activeColor="bg-red-50 text-red-600"
-        />
-        <FilterButton
-          active={currentFilter === "found"}
-          onClick={() => handleFilterChange("found")}
-          label="Found Items"
-          activeColor="bg-green-50 text-green-600"
-        />
-        <FilterButton
-          active={currentFilter === "retrieved"}
-          onClick={() => handleFilterChange("retrieved")}
-          label="Retrieved"
-          activeColor="bg-blue-50 text-blue-600"
-        />
-      </div>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Browse Items</h1>
+            <p className="text-slate-500">
+              {searchQuery ? `Search results for "${searchQuery}"` : "View all reported lost and found items."}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Link to="/report-lost" className="btn btn-secondary">
+              Report Lost
+            </Link>
+            <Link to="/report-found" className="btn btn-primary">
+              Report Found
+            </Link>
+          </div>
+        </div>
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
-      >
-        <AnimatePresence mode="popLayout">
-          {filteredItems.length > 0 ? (
-            filteredItems.map(item => (
-              <motion.div
-                key={item.id}
-                layout
-                variants={itemVariants}
-                initial="hidden"
-                animate="visible"
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 flex flex-col h-full"
-              >
-                <div className="h-48 bg-slate-50 flex items-center justify-center text-5xl text-slate-300 relative group overflow-hidden">
-                  {item.image ? (
-                    <img src={item.image} alt={item.item} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                  ) : (
-                    <span>{item.type === "Lost" ? "🔍" : "📦"}</span>
-                  )}
-                  <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${item.type === 'Lost' ? 'bg-red-100 text-red-600 border border-red-200' : 'bg-green-100 text-green-600 border border-green-200'
-                    }`}>
-                    {item.type}
-                  </div>
-                  {["Retrieved", "Returned", "Resolved", "Brought Back"].includes(item.status) && (
-                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
-                      <span className="bg-blue-600 text-white px-4 py-2 rounded-full font-bold shadow-lg transform -rotate-12 border-2 border-white">
-                        RETRIEVED
+        {/* Active Filters Summary */}
+        {(currentFilter !== "all" || currentCategory !== "all" || searchQuery) && (
+          <div className="mb-6 flex items-center gap-2">
+            <span className="text-sm font-medium text-slate-700">Active Filters:</span>
+            <div className="flex flex-wrap gap-2">
+              {currentFilter !== "all" && (
+                <span className="badge badge-primary flex items-center gap-1 bg-indigo-100 text-indigo-700 border-indigo-200">
+                  {currentFilter === "lost" ? "Lost Items" : currentFilter === "found" ? "Found Items" : "Retrieved"}
+                  <X size={14} className="cursor-pointer" onClick={() => handleFilterChange("all")} />
+                </span>
+              )}
+              {currentCategory !== "all" && (
+                <span className="badge badge-primary flex items-center gap-1 bg-purple-100 text-purple-700 border-purple-200">
+                  {categories.find(c => c.id === currentCategory)?.label || currentCategory}
+                  <X size={14} className="cursor-pointer" onClick={() => handleCategoryChange("all")} />
+                </span>
+              )}
+              {searchQuery && (
+                <span className="badge badge-primary flex items-center gap-1 bg-amber-100 text-amber-700 border-amber-200">
+                  Search: "{searchQuery}"
+                  <X size={14} className="cursor-pointer" onClick={() => {
+                    searchParams.delete("search");
+                    setSearchParams(searchParams);
+                  }} />
+                </span>
+              )}
+              <button onClick={clearFilters} className="text-xs text-slate-500 hover:text-red-500 underline ml-2">Clear All</button>
+            </div>
+          </div>
+        )}
+
+        {/* Filter Controls */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-10">
+          <div className="flex flex-col gap-6">
+
+            {/* Type Filters */}
+            <div className="flex flex-wrap gap-2 items-center border-b border-slate-100 pb-4">
+              <span className="text-slate-400 mr-2 flex items-center gap-1 text-sm font-medium uppercase tracking-wider text-xs"><Filter size={14} /> Type</span>
+              <FilterButton
+                active={currentFilter === "all"}
+                onClick={() => handleFilterChange("all")}
+                label="All"
+              />
+              <FilterButton
+                active={currentFilter === "lost"}
+                onClick={() => handleFilterChange("lost")}
+                label="Lost Items"
+                activeClass="bg-red-100 text-red-700 border-red-200"
+              />
+              <FilterButton
+                active={currentFilter === "found"}
+                onClick={() => handleFilterChange("found")}
+                label="Found Items"
+                activeClass="bg-emerald-100 text-emerald-700 border-emerald-200"
+              />
+              <FilterButton
+                active={currentFilter === "retrieved"}
+                onClick={() => handleFilterChange("retrieved")}
+                label="Retrieved History"
+                activeClass="bg-indigo-100 text-indigo-700 border-indigo-200"
+              />
+            </div>
+
+            {/* Category Filters */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-slate-400 mr-2 flex items-center gap-1 text-sm font-medium uppercase tracking-wider text-xs"><Package size={14} /> Category</span>
+              {categories.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => handleCategoryChange(cat.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${currentCategory === cat.id
+                      ? "bg-slate-800 text-white border-slate-800 shadow-md transform -translate-y-0.5"
+                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
+                    }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Grid */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredItems.length > 0 ? (
+              filteredItems.map(item => (
+                <motion.div
+                  key={item.id}
+                  layout
+                  variants={itemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="card group hover:-translate-y-1 transition-transform duration-300 flex flex-col h-full"
+                >
+                  {/* Image Area */}
+                  <div className="h-48 bg-slate-50 relative flex items-center justify-center overflow-hidden border-b border-slate-100">
+                    {item.image ? (
+                      <img src={item.image} alt={item.item} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    ) : (
+                      <div className="text-slate-300">
+                        {item.type === "Lost" ? <Search size={48} strokeWidth={1.5} /> : <Package size={48} strokeWidth={1.5} />}
+                      </div>
+                    )}
+
+                    <div className="absolute top-3 right-3 flex gap-2">
+                      <span className={`badge ${item.type === 'Lost' ? 'badge-lost' : 'badge-found'} shadow-sm`}>
+                        {item.type}
                       </span>
                     </div>
-                  )}
-                </div>
 
-                <div className="p-6 flex flex-col flex-1">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xl font-bold text-slate-900 line-clamp-1" title={item.item}>{item.item}</h3>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-                    <span>📍 {item.location}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs text-slate-400 mb-6 mt-auto">
-                    <span>📅 {item.date}</span>
-                    <span>•</span>
-                    <span className="font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                      {["Retrieved", "Returned", "Resolved", "Brought Back"].includes(item.status) ? "Retrieved" : item.status}
-                    </span>
-                  </div>
-
-                  <div className="space-y-3 mt-auto">
-                    <Link to={`/item/${item.id}`} className="block">
-                      <button className="w-full py-2.5 rounded-lg border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors">
-                        View Details
-                      </button>
-                    </Link>
-
-                    {user?.role === 'Admin' && (
-                      <button
-                        onClick={() => {
-                          if (window.confirm("Are you sure you want to delete this report?")) {
-                            deleteReport(item.id);
-                          }
-                        }}
-                        className="w-full py-2 rounded-lg bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 transition-colors"
-                      >
-                        Delete Report
-                      </button>
-                    )}
-
-                    {/* Retrieval Button Logic */}
-                    {!["Retrieved", "Returned", "Resolved", "Brought Back"].includes(item.status) ? (
-                      <>
-                        {item.type === 'Lost' && (
-                          <button
-                            onClick={() => navigate("/report-found")}
-                            className="w-full py-2.5 rounded-lg bg-green-500 text-white font-medium hover:bg-green-600 shadow-sm transition-colors"
-                          >
-                            I Found This!
-                          </button>
-                        )}
-
-                        {/* Only Show Retrieved Button for Found items to Admin or Reporter */}
-                        {item.type === 'Found' && (user?.role === 'Admin' || (user && item.reporterEmail === user.email)) && (
-                          <button
-                            onClick={() => {
-                              if (window.confirm("Confirm that this item has been returned to its owner?")) {
-                                markAsRetrieved(item.id);
-                              }
-                            }}
-                            className="w-full py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 shadow-sm transition-colors"
-                          >
-                            Mark as Retrieved
-                          </button>
-                        )}
-
-                        {item.type === 'Lost' && (user && item.reporterEmail === user.email) && (
-                          <button
-                            onClick={() => {
-                              if (window.confirm("Found it yourself?")) {
-                                markAsRetrieved(item.id, "Brought Back");
-                              }
-                            }}
-                            className="w-full py-2.5 rounded-lg bg-slate-700 text-white font-medium hover:bg-slate-800 shadow-sm transition-colors mt-2"
-                          >
-                            I Got It Back
-                          </button>
-                        )}
-                      </>
-                    ) : (
-                      <button
-                        disabled
-                        className="w-full py-2.5 rounded-lg font-medium transition-colors bg-blue-50 text-blue-600 border border-blue-100 cursor-not-allowed"
-                      >
-                        Item Returned
-                      </button>
+                    {["Retrieved", "Returned", "Resolved", "Brought Back"].includes(item.status) && (
+                      <div className="absolute inset-0 bg-white/80 backdrop-blur-[1px] flex items-center justify-center">
+                        <span className="bg-slate-900/90 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg border border-white/20">
+                          Retrieved
+                        </span>
+                      </div>
                     )}
                   </div>
+
+                  {/* Content */}
+                  <div className="p-5 flex flex-col flex-1">
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="text-lg font-bold text-slate-900 line-clamp-1 group-hover:text-indigo-600 transition-colors" title={item.item}>
+                        {item.item}
+                      </h3>
+                    </div>
+                    {item.category && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-3">{item.category}</span>
+                    )}
+
+                    <div className="flex items-center text-slate-500 text-sm mb-4">
+                      <MapPin size={14} className="mr-1.5 shrink-0" />
+                      <span className="truncate">{item.location}</span>
+                    </div>
+
+                    <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between text-xs text-slate-400">
+                      <span className="flex items-center gap-1.5">
+                        <Calendar size={12} /> {item.date}
+                      </span>
+                      <Link to={`/item/${item.id}`} className="text-indigo-600 font-medium hover:underline">
+                        Details
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="col-span-full py-20 text-center"
+              >
+                <div className="inline-flex p-4 rounded-full bg-slate-100 text-slate-400 mb-4">
+                  <HelpCircle size={48} strokeWidth={1} />
                 </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-1">No items found</h3>
+                <p className="text-slate-500">Try adjusting your filters or search terms.</p>
+                <button onClick={clearFilters} className="btn btn-secondary mt-4">Clear Filters</button>
               </motion.div>
-            ))
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="col-span-full py-20 text-center text-slate-400"
-            >
-              <div className="text-6xl mb-4">🤔</div>
-              <h3 className="text-xl font-semibold text-slate-600 mb-2">No items found</h3>
-              <p>Try adjusting your search or filters.</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
     </div>
   );
 }
 
-const FilterButton = ({ active, onClick, label, activeColor }) => (
+const FilterButton = ({ active, onClick, label, activeClass }) => (
   <button
     onClick={onClick}
-    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${active
-      ? (activeColor || "bg-slate-900 text-white shadow-md")
-      : "text-slate-500 hover:bg-slate-50"
+    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border ${active
+      ? (activeClass || "bg-slate-800 text-white border-slate-800 shadow-md transform -translate-y-0.5")
+      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
       }`}
   >
     {label}

@@ -2,7 +2,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
 import { useReport } from "../context/ReportContext";
-import NotificationPanel from "./NotificationPanel"; // We will create this next
+import { Search, Menu, X, Bell, User, LogOut, Box, PlusCircle, Shield, Home, Grid } from "lucide-react";
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -11,74 +11,60 @@ function Navbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
-  const [searchError, setSearchError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    if (value.trim().length > 0) setSearchError("");
 
     if (value.trim().length > 0) {
       const matches = reports.filter(item => {
-        // Exclude retrieved items
         const isRetrieved = ["Retrieved", "Returned", "Resolved", "Brought Back"].includes(item.status);
         if (isRetrieved) return false;
-
         return (
           (item.item && item.item.toLowerCase().includes(value.toLowerCase())) ||
-          (item.location && item.location.toLowerCase().includes(value.toLowerCase())) ||
-          (item.type && item.type.toLowerCase().includes(value.toLowerCase()))
+          (item.location && item.location.toLowerCase().includes(value.toLowerCase()))
         );
       }).slice(0, 5);
       setSuggestions(matches);
     } else {
       setSuggestions([]);
     }
-
-    if (location.pathname === "/items") {
-      navigate(`/items?search=${encodeURIComponent(value)}`, { replace: true });
-    }
   };
 
   const handleSearchSubmit = () => {
-    if (!searchTerm.trim()) {
-      setSearchError("Please enter a keyword");
-      return;
-    }
+    if (!searchTerm.trim()) return;
     navigate(`/items?search=${encodeURIComponent(searchTerm)}`);
     setShowMobileMenu(false);
+    setSuggestions([]);
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleSearchSubmit();
-    }
+    if (e.key === "Enter") handleSearchSubmit();
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 shadow-lg backdrop-blur-sm bg-opacity-95">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg group-hover:bg-indigo-500 transition-colors">
-              <span className="text-2xl">🔍</span>
+    <nav className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+      <div className="container-custom">
+        <div className="flex justify-between items-center h-16">
+
+          {/* Brand Logo */}
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:bg-indigo-700 transition-colors">
+              <Box size={20} />
             </div>
             <div className="flex flex-col">
-              <span className="text-white text-lg font-bold tracking-tight leading-none group-hover:text-indigo-400 transition-colors">CAMPUS</span>
-              <span className="text-slate-400 text-xs font-semibold tracking-widest uppercase">Lost & Found</span>
+              <span className="text-slate-900 text-lg font-bold tracking-tight leading-none">CAMPUS</span>
+              <span className="text-indigo-600 text-xs font-bold tracking-widest uppercase">PORTAL</span>
             </div>
           </Link>
 
-          {/* Desktop Search */}
-          <div className="hidden md:block flex-1 max-w-xl mx-12 relative">
+          {/* Desktop Search Bar */}
+          <div className="hidden md:block flex-1 max-w-md mx-8 relative">
             <div className="relative group">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                <Search size={18} />
               </span>
               <input
                 type="text"
@@ -86,18 +72,13 @@ function Navbar() {
                 value={searchTerm}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                className="w-full pl-12 pr-4 py-3 bg-slate-800 border-2 border-transparent focus:border-indigo-500 rounded-xl text-slate-200 placeholder-slate-500 outline-none transition-all shadow-inner"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
               />
-              {searchError && (
-                <div className="absolute top-14 right-0 bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg animate-in fade-in slide-in-from-top-1 pointer-events-none font-bold">
-                  {searchError}
-                </div>
-              )}
             </div>
 
-            {/* Suggestions Dropdown */}
+            {/* Search Suggestions */}
             {suggestions.length > 0 && searchTerm && (
-              <div className="absolute top-full left-0 right-0 mt-3 bg-slate-800 rounded-xl shadow-2xl overflow-hidden z-50 border border-slate-700">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden z-50">
                 {suggestions.map((item) => (
                   <div
                     key={item.id}
@@ -106,18 +87,14 @@ function Navbar() {
                       setSearchTerm("");
                       setSuggestions([]);
                     }}
-                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-700 border-b border-slate-700/50 last:border-none transition-colors group"
+                    className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-50 border-b border-slate-50 last:border-none"
                   >
                     <div className="flex flex-col">
-                      <span className="font-semibold text-slate-200 group-hover:text-white transition-colors">{item.item}</span>
-                      <span className="text-xs text-slate-400">📍 {item.location}</span>
+                      <span className="font-medium text-slate-800 text-sm">{item.item}</span>
+                      <span className="text-xs text-slate-500">{item.location}</span>
                     </div>
-                    <span
-                      className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${item.type === "Lost"
-                        ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                        : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                        }`}
-                    >
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${item.type === "Lost" ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
+                      }`}>
                       {item.type}
                     </span>
                   </div>
@@ -127,137 +104,157 @@ function Navbar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link to="/" className="text-slate-300 font-medium hover:text-white transition-colors hover:bg-slate-800 px-3 py-2 rounded-lg">Home</Link>
-            <Link to="/items" className="text-slate-300 font-medium hover:text-white transition-colors hover:bg-slate-800 px-3 py-2 rounded-lg">Browse</Link>
-
-            {user && user.role === "Admin" && (
-              <Link to="/admin-dashboard" className="flex items-center gap-2 text-amber-400 font-semibold border border-amber-400/30 bg-amber-400/10 px-4 py-2 rounded-lg hover:bg-amber-400 hover:text-slate-900 transition-all">
-                <span>🛡️</span> Admin
+          <div className="hidden md:flex items-center gap-6">
+            <nav className="flex items-center gap-1">
+              <Link to="/" className="text-slate-600 font-medium hover:text-indigo-600 transition-colors px-3 py-2 text-sm rounded-md hover:bg-indigo-50 flex items-center gap-2">
+                <Home size={16} /> Home
               </Link>
-            )}
+              <Link to="/items" className="text-slate-600 font-medium hover:text-indigo-600 transition-colors px-3 py-2 text-sm rounded-md hover:bg-indigo-50 flex items-center gap-2">
+                <Grid size={16} /> Browse
+              </Link>
+            </nav>
 
-            <div className="w-px h-8 bg-slate-700"></div>
+            <div className="h-6 w-px bg-slate-200"></div>
 
-            {/* Notification Bell Placeholder - functionality in next step */}
-            <div className="relative">
-              <button className="text-slate-300 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-800">
-                <span className="text-xl">🔔</span>
-                {/* <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-900"></span> */}
+            <div className="flex items-center gap-3">
+              {user && user.role === "Admin" && (
+                <Link to="/admin-dashboard" className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 p-2 rounded-lg transition-colors" title="Admin Dashboard">
+                  <Shield size={20} />
+                </Link>
+              )}
+
+              <button className="text-slate-500 hover:text-indigo-600 p-2 rounded-lg hover:bg-slate-100 transition-colors relative">
+                <Bell size={20} />
+                {/* Notification dot placeholder */}
+                {/* <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span> */}
               </button>
+
+              {user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="flex items-center gap-3 pl-2 py-1 pr-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-full transition-all focus:ring-2 focus:ring-indigo-100"
+                  >
+                    <div className="text-right hidden lg:block pl-2">
+                      <div className="text-xs font-bold text-slate-700 leading-tight">{user.name}</div>
+                      <div className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">{user.role}</div>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-slate-100 text-indigo-600 flex items-center justify-center font-bold text-sm border border-slate-200">
+                      {user.profileImage ? (
+                        <img src={user.profileImage} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                      ) : (
+                        <span>{user.name ? user.name[0].toUpperCase() : "U"}</span>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showDropdown && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-50 animate-in fade-in slide-in-from-top-2">
+                      <div className="px-4 py-3 border-b border-slate-50 bg-slate-50/50">
+                        <p className="text-sm font-semibold text-slate-900">{user.name}</p>
+                        <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                      </div>
+                      <div className="p-1">
+                        <Link
+                          to="/profile"
+                          onClick={() => setShowDropdown(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-md"
+                        >
+                          <User size={16} /> My Profile
+                        </Link>
+                        {user.role === 'Admin' && (
+                          <Link
+                            to="/admin-dashboard"
+                            onClick={() => setShowDropdown(false)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-md"
+                          >
+                            <Shield size={16} /> Admin Panel
+                          </Link>
+                        )}
+                        <button
+                          onClick={() => {
+                            logout();
+                            setShowDropdown(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-md text-left"
+                        >
+                          <LogOut size={16} /> Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Link to="/login" className="btn btn-primary px-5 py-2">
+                    Log In
+                  </Link>
+                </div>
+              )}
             </div>
-
-            {user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="flex items-center gap-3 focus:outline-none group"
-                >
-                  <div className="text-right hidden lg:block">
-                    <div className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">{user.name || "User"}</div>
-                    <div className="text-xs text-slate-400">{user.role || "Member"}</div>
-                  </div>
-                  <div className="w-11 h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg border-2 border-slate-800 group-hover:border-indigo-500 transition-all shadow-lg">
-                    {user.profileImage ? (
-                      <img src={user.profileImage} alt="Profile" className="w-full h-full object-cover rounded-xl" />
-                    ) : (
-                      <span>{user.name ? user.name[0].toUpperCase() : "U"}</span>
-                    )}
-                  </div>
-                </button>
-
-                {/* User Dropdown */}
-                {showDropdown && (
-                  <div className="absolute right-0 mt-4 w-60 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 overflow-hidden ring-1 ring-black ring-opacity-5">
-                    <div className="px-5 py-4 border-b border-slate-100 bg-slate-50">
-                      <div className="font-bold text-slate-900">{user.name}</div>
-                      <div className="text-xs text-slate-500 truncate">{user.email}</div>
-                    </div>
-                    <div className="py-1">
-                      <Link
-                        to="/profile"
-                        onClick={() => setShowDropdown(false)}
-                        className="flex items-center gap-3 px-5 py-3 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
-                      >
-                        <span>👤</span> My Profile
-                      </Link>
-                      <button
-                        onClick={() => {
-                          logout();
-                          setShowDropdown(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-5 py-3 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors text-left"
-                      >
-                        <span>🚪</span> Log Out
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link to="/login" className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-500 shadow-lg shadow-indigo-600/30 transition-all hover:-translate-y-0.5">
-                Login
-              </Link>
-            )}
           </div>
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-slate-300 hover:text-white p-2"
+            className="md:hidden text-slate-600 hover:text-indigo-600 p-2"
             onClick={() => setShowMobileMenu(!showMobileMenu)}
           >
-            <span className="text-2xl">{showMobileMenu ? "✕" : "☰"}</span>
+            {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu Drawer */}
       {showMobileMenu && (
-        <div className="md:hidden bg-slate-800 border-t border-slate-700 animate-in slide-in-from-top-4 shadow-2xl">
+        <div className="md:hidden bg-white border-t border-slate-100 shadow-xl">
           <div className="p-4 space-y-4">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500"
-            />
-
-            <div className="space-y-2">
-              <Link to="/" className="block text-slate-300 font-medium py-3 px-4 rounded-lg hover:bg-slate-700 hover:text-white" onClick={() => setShowMobileMenu(false)}>Home</Link>
-              <Link to="/items" className="block text-slate-300 font-medium py-3 px-4 rounded-lg hover:bg-slate-700 hover:text-white" onClick={() => setShowMobileMenu(false)}>Browse Items</Link>
+            <div className="relative">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+              />
             </div>
 
-            {user && user.role === "Admin" && (
-              <Link to="/admin-dashboard" className="block text-amber-400 font-medium py-3 px-4 rounded-lg bg-amber-400/10 border border-amber-400/20" onClick={() => setShowMobileMenu(false)}>
-                🛡️ Admin Dashboard
+            <div className="space-y-1">
+              <Link to="/" className="flex items-center gap-3 text-slate-700 font-medium py-2.5 px-4 rounded-lg hover:bg-slate-50" onClick={() => setShowMobileMenu(false)}>
+                <Home size={18} className="text-slate-400" /> Home
               </Link>
-            )}
+              <Link to="/items" className="flex items-center gap-3 text-slate-700 font-medium py-2.5 px-4 rounded-lg hover:bg-slate-50" onClick={() => setShowMobileMenu(false)}>
+                <Grid size={18} className="text-slate-400" /> Browse Items
+              </Link>
+            </div>
 
-            <div className="border-t border-slate-700 pt-4">
+            <div className="border-t border-slate-100 pt-4">
               {user ? (
-                <div>
-                  <div className="flex items-center gap-4 mb-4 px-2">
-                    <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-lg">
+                <>
+                  <div className="flex items-center gap-3 px-4 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
                       {user.name ? user.name[0].toUpperCase() : "U"}
                     </div>
                     <div>
-                      <div className="text-white font-bold text-lg">{user.name}</div>
-                      <div className="text-indigo-400 text-sm">{user.email}</div>
+                      <div className="font-semibold text-slate-900">{user.name}</div>
+                      <div className="text-xs text-slate-500">{user.email}</div>
                     </div>
                   </div>
-                  <Link to="/profile" className="block text-slate-300 py-3 px-4 rounded-lg hover:bg-slate-700 hover:text-white" onClick={() => setShowMobileMenu(false)}>My Profile</Link>
+                  <Link to="/profile" className="flex items-center gap-3 text-slate-700 py-2.5 px-4 rounded-lg hover:bg-slate-50" onClick={() => setShowMobileMenu(false)}>
+                    <User size={18} /> My Profile
+                  </Link>
                   <button
                     onClick={() => { logout(); setShowMobileMenu(false); }}
-                    className="block w-full text-left text-red-400 py-3 px-4 rounded-lg hover:bg-red-500/10"
+                    className="w-full flex items-center gap-3 text-red-600 py-2.5 px-4 rounded-lg hover:bg-red-50 text-left"
                   >
-                    Log Out
+                    <LogOut size={18} /> Sign Out
                   </button>
-                </div>
+                </>
               ) : (
-                <Link to="/login" className="block w-full text-center bg-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg" onClick={() => setShowMobileMenu(false)}>
-                  Login
+                <Link to="/login" className="block w-full text-center btn btn-primary py-3" onClick={() => setShowMobileMenu(false)}>
+                  Sign In
                 </Link>
               )}
             </div>

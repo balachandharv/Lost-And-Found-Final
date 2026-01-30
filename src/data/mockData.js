@@ -17,6 +17,7 @@ export const mockReports = [
     {
         id: "R101",
         item: "MacBook Pro",
+        category: "electronics",
         location: "Library 2nd Floor",
         type: "Lost",
         reportedBy: "John Doe",
@@ -26,6 +27,7 @@ export const mockReports = [
     {
         id: "R102",
         item: "Blue Water Bottle",
+        category: "accessories",
         location: "Cafeteria",
         type: "Found",
         reportedBy: "Admin",
@@ -36,6 +38,7 @@ export const mockReports = [
     {
         id: "R103",
         item: "Calculus Textbook",
+        category: "books",
         location: "Room 304",
         type: "Lost",
         reportedBy: "Jane Smith",
@@ -45,6 +48,7 @@ export const mockReports = [
     {
         id: "R104",
         item: "Car Keys (Honda)",
+        category: "keys",
         location: "Parking Lot A",
         type: "Found",
         reportedBy: "Security",
@@ -55,6 +59,7 @@ export const mockReports = [
     {
         id: "R105",
         item: "ID Card",
+        category: "uncategorized",
         location: "Main Gate",
         type: "Found",
         reportedBy: "Emily Davis",
@@ -65,6 +70,7 @@ export const mockReports = [
     {
         id: "R106",
         item: "Wireless Earbuds",
+        category: "electronics",
         location: "Gym Locker",
         type: "Lost",
         reportedBy: "Alex Johnson",
