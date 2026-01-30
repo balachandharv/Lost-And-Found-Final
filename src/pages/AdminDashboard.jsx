@@ -26,7 +26,7 @@ import ActiveUsersWidget from "../components/ActiveUsersWidget";
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("all_reports");
   const { reports, stats: reportStats, deleteReport, updateReportStatus } = useReport();
-  const { users, updateUserStatus } = useAuth();
+  const { users, updateUserStatus, deleteUser } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const navigate = useNavigate();
@@ -115,7 +115,7 @@ function AdminDashboard() {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            <StatCard label="Total Users" value={1250} icon={<Users size={24} />} color="text-indigo-600" bg="bg-indigo-50" />
+            <StatCard label="Total Users" value={users.length} icon={<Users size={24} />} color="text-indigo-600" bg="bg-indigo-50" />
             <StatCard label="Active Lost" value={reportStats.totalLost} icon={<TrendingDown size={24} />} color="text-red-600" bg="bg-red-50" />
             <StatCard label="Active Found" value={reportStats.totalFound} icon={<Box size={24} />} color="text-emerald-600" bg="bg-emerald-50" />
             <StatCard label="Resolved" value={reportStats.totalReturned} icon={<CheckCircle size={24} />} color="text-blue-600" bg="bg-blue-50" />
@@ -224,20 +224,33 @@ function AdminDashboard() {
                           </div>
 
                           {user.role !== "Admin" && (
-                            <button
-                              className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${user.status === "Blocked"
+                            <div className="flex gap-2">
+                              <button
+                                className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${user.status === "Blocked"
                                   ? "border-emerald-200 text-emerald-600 hover:bg-emerald-50"
                                   : "border-red-200 text-red-600 hover:bg-red-50"
-                                }`}
-                              onClick={() => {
-                                const newStatus = user.status === "Active" ? "Blocked" : "Active";
-                                if (window.confirm(`Confirm change status for ${user.name}?`)) {
-                                  updateUserStatus(user.id, newStatus);
-                                }
-                              }}
-                            >
-                              {user.status === "Blocked" ? "Unblock" : "Block"}
-                            </button>
+                                  }`}
+                                onClick={() => {
+                                  const newStatus = user.status === "Active" ? "Blocked" : "Active";
+                                  if (window.confirm(`Confirm change status for ${user.name}?`)) {
+                                    updateUserStatus(user.id, newStatus);
+                                  }
+                                }}
+                              >
+                                {user.status === "Blocked" ? "Unblock" : "Block"}
+                              </button>
+                              <button
+                                className="text-slate-400 hover:text-red-600 p-1.5 border border-transparent hover:border-red-100 rounded-lg transition-colors"
+                                onClick={() => {
+                                  if (window.confirm(`Are you sure you want to PERMANENTLY delete user ${user.name}? This cannot be undone.`)) {
+                                    deleteUser(user.id);
+                                  }
+                                }}
+                                title="Delete User"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           )}
                         </div>
                       ))}

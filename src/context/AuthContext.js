@@ -114,6 +114,14 @@ export const AuthProvider = ({ children }) => {
 
             // If successful, also save to localStorage for hybrid compatibility if needed
             // But main source is now backend
+
+            // Add to local users state for immediate UI update (Total Users count)
+            if (data.success && data.user) {
+                const updatedUsers = [...users, data.user];
+                setUsers(updatedUsers);
+                localStorage.setItem("users", JSON.stringify(updatedUsers));
+            }
+
             return data;
         } catch (error) {
             console.error("Register error:", error);
@@ -212,6 +220,18 @@ export const AuthProvider = ({ children }) => {
         return { success: true };
     };
 
+    // Delete User (Admin function)
+    const deleteUser = (id) => {
+        const updatedUsers = users.filter(u => u.id !== id);
+        setUsers(updatedUsers);
+        localStorage.setItem("users", JSON.stringify(updatedUsers));
+
+        // If deleted self (which shouldn't happen via UI normally, but safeguard)
+        if (user && user.id === id) {
+            logout();
+        }
+    };
+
     // Logout
     const logout = () => {
         setUser(null);
@@ -239,7 +259,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     return (
-        <AuthContext.Provider value={{ user, users, login, logout, register, updateUserStatus, updateProfile, requestOtp, verifyOtp, resendOtp, resetPassword }}>
+        <AuthContext.Provider value={{ user, users, login, logout, register, updateUserStatus, updateProfile, requestOtp, verifyOtp, resendOtp, resetPassword, deleteUser }}>
             {children}
         </AuthContext.Provider>
     );

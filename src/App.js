@@ -19,6 +19,12 @@ import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminAuthority from "./pages/AdminAuthority";
 
+// Support Pages
+import HelpCenter from "./pages/HelpCenter";
+import CommunityGuidelines from "./pages/CommunityGuidelines";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+
 function AnimatedRoutes() {
   const location = useLocation();
 
@@ -36,6 +42,12 @@ function AnimatedRoutes() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-authority" element={<AdminAuthority />} />
+
+        {/* Support Routes */}
+        <Route path="/help" element={<HelpCenter />} />
+        <Route path="/guidelines" element={<CommunityGuidelines />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
       </Routes>
     </AnimatePresence>
   );
