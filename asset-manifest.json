@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/Lost-And-Found-Final/static/css/main.a4b8fcdd.css",
+    "main.js": "/Lost-And-Found-Final/static/js/main.377af2a2.js",
+    "index.html": "/Lost-And-Found-Final/index.html",
+    "main.a4b8fcdd.css.map": "/Lost-And-Found-Final/static/css/main.a4b8fcdd.css.map",
+    "main.377af2a2.js.map": "/Lost-And-Found-Final/static/js/main.377af2a2.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.a4b8fcdd.css",
+    "static/js/main.377af2a2.js"
+  ]
+}
