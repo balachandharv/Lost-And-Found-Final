@@ -7,6 +7,10 @@ const path = require('path');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const reportRoutes = require('./routes/reports');
+const notificationRoutes = require('./routes/notifications');
+
+// Initialize Firebase (for push notifications)
+require('./firebase');
 
 // Initialize database (this creates tables on first run)
 require('./db');
@@ -25,6 +29,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

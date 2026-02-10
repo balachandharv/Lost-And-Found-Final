@@ -95,7 +95,7 @@ function Home() {
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                   viewport={{ once: true }}
-                  className="card group hover:scale-[1.01] transition-transform duration-200"
+                  className="card p-5 group hover:scale-[1.01] transition-transform duration-200 flex flex-col"
                 >
                   <div className="flex justify-between items-start mb-4">
                     <span className="text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 text-slate-600">
@@ -107,16 +107,16 @@ function Home() {
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                  <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-1 group-hover:text-indigo-600 transition-colors capitalize">
                     {item.item}
                   </h3>
 
-                  <div className="flex items-center text-slate-500 text-sm mb-6">
+                  <div className="flex items-center text-slate-500 text-sm mb-6 mt-auto">
                     <MapPin size={16} className="mr-1.5 shrink-0" />
-                    <span className="truncate">{item.location}</span>
+                    <span className="truncate capitalize">{item.location}</span>
                   </div>
 
-                  <Link to={`/item/${item.id}`} className="block w-full text-center py-2 rounded border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors">
+                  <Link to={`/item/${item.id}`} className="block w-full text-center py-2.5 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-200 transition-all">
                     View Details
                   </Link>
                 </motion.div>

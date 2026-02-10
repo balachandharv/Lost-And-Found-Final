@@ -25,7 +25,7 @@ function AdminAuthority() {
 
     return (
         <PageTransition>
-            <div className="min-h-screen bg-slate-50 py-10 px-4">
+            <div className="min-h-screen bg-slate-50 py-12">
                 <div className="container-custom max-w-6xl mx-auto">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}

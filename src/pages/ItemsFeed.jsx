@@ -42,10 +42,15 @@ function ItemsFeed() {
   };
 
   const filteredItems = React.useMemo(() => {
+    if (!reports) return []; // Safeguard against undefined reports
+
     const seenIds = new Set();
     const retrievedStatuses = ["Retrieved", "Returned", "Resolved", "Brought Back"];
 
     return reports.filter(item => {
+      // 0. Basic Integrity Check
+      if (!item || !item.id) return false;
+
       // 1. Search Query
       const matchesSearch = (item.item && item.item.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.location && item.location.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -61,7 +66,7 @@ function ItemsFeed() {
       } else {
         if (retrievedStatuses.includes(item.status)) matchesType = false; // Hide retrieved items from main feeds
         else if (currentFilter === "all") matchesType = true;
-        else matchesType = item.type.toLowerCase() === currentFilter.toLowerCase();
+        else matchesType = item.type && item.type.toLowerCase() === currentFilter.toLowerCase();
       }
 
       // 4. Category Filter
@@ -181,8 +186,8 @@ function ItemsFeed() {
                   key={cat.id}
                   onClick={() => handleCategoryChange(cat.id)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${currentCategory === cat.id
-                      ? "bg-slate-800 text-white border-slate-800 shadow-md transform -translate-y-0.5"
-                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
+                    ? "bg-slate-800 text-white border-slate-800 shadow-md transform -translate-y-0.5"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
                     }`}
                 >
                   {cat.label}
@@ -256,9 +261,23 @@ function ItemsFeed() {
                       <span className="flex items-center gap-1.5">
                         <Calendar size={12} /> {item.date}
                       </span>
-                      <Link to={`/item/${item.id}`} className="text-indigo-600 font-medium hover:underline">
-                        Details
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        {item.type === 'Lost' && (
+                          <Link
+                            to="/report-found"
+                            state={{ foundItem: item }}
+                            className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md text-xs font-semibold hover:bg-emerald-100 transition-colors border border-emerald-100"
+                          >
+                            Found This?
+                          </Link>
+                        )}
+                        <Link
+                          to={`/item/${item.id}`}
+                          className="px-2 py-1 rounded-md bg-slate-50 text-slate-600 font-medium hover:bg-slate-100 transition-colors"
+                        >
+                          Details
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -279,8 +298,8 @@ function ItemsFeed() {
             )}
           </AnimatePresence>
         </motion.div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }
 

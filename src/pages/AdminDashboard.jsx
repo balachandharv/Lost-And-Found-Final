@@ -181,6 +181,19 @@ function AdminDashboard() {
                               {report.status}
                             </span>
                             <div className="flex gap-2">
+                              {report.status === "PendingApproval" && (
+                                <button
+                                  onClick={() => {
+                                    if (window.confirm("Approve this report for listing?")) {
+                                      updateReportStatus(report.id, "Pending");
+                                    }
+                                  }}
+                                  className="btn btn-ghost text-xs py-1.5 px-3 h-auto text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-medium"
+                                  title="Approve for Listing"
+                                >
+                                  <CheckCircle size={14} className="mr-1 inline" /> Approve
+                                </button>
+                              )}
                               <button
                                 onClick={() => navigate(`/item/${report.id}`)}
                                 className="btn btn-ghost text-xs py-1.5 px-3 h-auto"

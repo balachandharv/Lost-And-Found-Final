@@ -33,16 +33,46 @@ export const ReportProvider = ({ children }) => {
 
     const deleteReport = (id) => {
         setReports(prev => prev.filter(report => report.id !== id));
+        // Also delete from backend
+        fetch(`http://localhost:5000/api/reports/${id}`, {
+            method: 'DELETE'
+        }).catch(err => console.error('Delete report error:', err));
     };
 
-    const addReport = (newReport) => {
+    const addReport = async (newReport) => {
+        // Add to local state first for immediate UI update
         setReports(prev => [newReport, ...prev]);
+
+        // Also send to backend to trigger notifications
+        try {
+            await fetch('http://localhost:5000/api/reports', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newReport)
+            });
+            console.log('Report sent to backend, notifications triggered');
+        } catch (error) {
+            console.error('Error sending report to backend:', error);
+        }
     };
 
-    const updateReportStatus = (id, newStatus) => {
+    const updateReportStatus = async (id, newStatus) => {
+        // Update local state
         setReports(prev => prev.map(report =>
             report.id === id ? { ...report, status: newStatus } : report
         ));
+
+        // Also update backend to trigger notifications
+        try {
+            await fetch(`http://localhost:5000/api/reports/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+            console.log('Status updated on backend, notifications triggered');
+        } catch (error) {
+            console.error('Error updating status on backend:', error);
+        }
     };
 
     const markAsRetrieved = (id, specificStatus = "Retrieved") => {

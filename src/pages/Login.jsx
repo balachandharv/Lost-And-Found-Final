@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageTransition from "../components/PageTransition";
 import BackgroundBubbles from "../components/BackgroundBubbles";
@@ -9,10 +9,15 @@ import { Lock, Mail, User, Eye, EyeOff, CheckCircle, AlertTriangle, ArrowRight, 
 
 function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, login, register, requestOtp, resetPassword } = useAuth();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+
+    // Get redirect info from protected route
+    const from = location.state?.from || "/";
+    const redirectMessage = location.state?.message || "";
 
     // Toggle between Sign In and Sign Up
     const [isSignUp, setIsSignUp] = useState(false);
@@ -23,7 +28,6 @@ function Login() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Forgot Password States
     const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -69,7 +73,8 @@ function Login() {
                 if (result.user.role === "Admin") {
                     navigate("/admin-dashboard");
                 } else {
-                    navigate("/");
+                    // Redirect to the page user was trying to access, or home
+                    navigate(from);
                 }
             } else {
                 setError(result.message);
@@ -180,6 +185,7 @@ function Login() {
         try {
             const result = await requestOtp(email);
             if (result.success) {
+                if (result.debugOtp) alert(`TEST MODE OTP: ${result.debugOtp}`);
                 navigate("/verify-email", { state: { email } });
             } else {
                 setError(result.message);
@@ -207,6 +213,11 @@ function Login() {
             if (result.success) {
                 setResetStep(2);
                 setSuccess("OTP sent! Please check your email.");
+                // For testing convenience:
+                if (result.debugOtp) {
+                    alert(`TEST MODE OTP: ${result.debugOtp}`);
+                    console.log("Debug OTP:", result.debugOtp);
+                }
             } else {
                 setError(result.message);
             }
@@ -428,6 +439,17 @@ function Login() {
                                         </p>
                                     </div>
 
+                                    {/* Redirect Message (when coming from protected route) */}
+                                    {redirectMessage && !isSignUp && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl text-blue-600 text-sm flex items-center gap-3"
+                                        >
+                                            <Lock size={18} /> {redirectMessage}
+                                        </motion.div>
+                                    )}
+
                                     {/* Error Message */}
                                     {error && (
                                         <motion.div
@@ -529,10 +551,15 @@ function Login() {
                                                 />
                                                 <button
                                                     type="button"
-                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    onClick={() => setShowPassword(prev => !prev)}
                                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
+                                                    aria-label={showPassword ? "Hide password" : "Show password"}
                                                 >
-                                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                                    {showPassword ? (
+                                                        <EyeOff size={18} />
+                                                    ) : (
+                                                        <Eye size={18} />
+                                                    )}
                                                 </button>
                                             </div>
                                         </div>
@@ -546,20 +573,13 @@ function Login() {
                                                 <div className="relative">
                                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                     <input
-                                                        type={showConfirmPassword ? "text" : "password"}
+                                                        type={showPassword ? "text" : "password"}
                                                         placeholder="Confirm password"
                                                         required
                                                         value={confirmPassword}
                                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                                        className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-medium"
+                                                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-medium"
                                                     />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors"
-                                                    >
-                                                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                                    </button>
                                                 </div>
                                             </div>
                                         )}
@@ -579,24 +599,7 @@ function Login() {
                                         </motion.button>
                                     </form>
 
-                                    {/* OTP Login Option */}
-                                    {!isSignUp && (
-                                        <div className="mt-6">
-                                            <div className="relative flex py-2 items-center">
-                                                <div className="flex-grow border-t border-slate-200"></div>
-                                                <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase font-semibold">Or</span>
-                                                <div className="flex-grow border-t border-slate-200"></div>
-                                            </div>
 
-                                            <button
-                                                type="button"
-                                                onClick={handleOtpLogin}
-                                                className="w-full py-3 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm mt-2"
-                                            >
-                                                <Mail size={16} /> Sign in with Email OTP
-                                            </button>
-                                        </div>
-                                    )}
 
                                     {/* Switch between Sign In / Sign Up */}
                                     <div className="mt-8 text-center text-sm text-slate-500">

@@ -87,7 +87,7 @@ function ReportLost() {
 
     return (
         <PageTransition>
-            <div className="min-h-screen py-10 px-4">
+            <div className="min-h-screen py-12">
                 <div className="container-custom max-w-2xl mx-auto">
                     <button
                         onClick={() => navigate(-1)}

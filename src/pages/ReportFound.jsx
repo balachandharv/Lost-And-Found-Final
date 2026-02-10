@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useReport } from "../context/ReportContext";
 import { useAuth } from "../context/AuthContext";
 import { ArrowLeft, Upload, X, AlertCircle } from 'lucide-react';
@@ -8,6 +8,7 @@ import PageTransition from "../components/PageTransition";
 
 function ReportFound() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { addReport, reports } = useReport();
     const { user } = useAuth();
     const [isOtherItem, setIsOtherItem] = useState(false);
@@ -28,6 +29,19 @@ function ReportFound() {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [fileError, setFileError] = useState("");
     const [isImage, setIsImage] = useState(true);
+
+    // Pre-fill form if navigated from "Found This?" button
+    React.useEffect(() => {
+        if (location.state?.foundItem) {
+            const { foundItem } = location.state;
+            setFormData(prev => ({
+                ...prev,
+                title: foundItem.item,
+                category: foundItem.category || "",
+                description: `Found item that matches: ${foundItem.item} (${foundItem.description || ''})`
+            }));
+        }
+    }, [location.state]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -99,7 +113,7 @@ function ReportFound() {
 
     return (
         <PageTransition>
-            <div className="min-h-screen py-10 px-4">
+            <div className="min-h-screen py-12">
                 <div className="container-custom max-w-2xl mx-auto">
                     <button
                         onClick={() => navigate(-1)}
@@ -127,6 +141,7 @@ function ReportFound() {
                                 <select
                                     id="titleSelect"
                                     name="titleSelect"
+                                    value={lostItems.some(item => item.item === formData.title) ? formData.title : (formData.title ? "other" : "")}
                                     onChange={handleChange}
                                     required
                                     className="form-input w-full"

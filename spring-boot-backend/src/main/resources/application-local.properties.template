@@ -1,0 +1,6 @@
+# Local Application Properties - DO NOT COMMIT THIS FILE
+# Copy this file and rename to application-local.properties
+# Update the values below with your actual credentials
+
+spring.datasource.password=BALARAMA007@
+spring.mail.password=YOUR_GMAIL_APP_PASSWORD

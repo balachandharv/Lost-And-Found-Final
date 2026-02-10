@@ -4,6 +4,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 const config = require('../config');
+const notificationService = require('../services/notificationService');
 
 // Middleware to verify token (optional - some routes are public)
 const verifyToken = (req, res, next) => {
@@ -63,6 +64,15 @@ router.post('/', verifyToken, (req, res) => {
 
         res.status(201).json({ success: true, report: newReport });
 
+        // Trigger notification to all users (async, don't wait)
+        const notificationType = type === 'Lost' ? 'lost_posted' : 'found_posted';
+        notificationService.broadcastNotification(
+            reporterId,
+            id,
+            notificationType,
+            { itemName: item, location }
+        ).catch(err => console.error('Notification broadcast error:', err));
+
     } catch (error) {
         console.error('Create report error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
@@ -104,6 +114,17 @@ router.patch('/:id/status', verifyToken, (req, res) => {
         }
 
         res.json({ success: true, report: updated });
+
+        // Notify item owner if status changed to retrieved/returned
+        const retrievedStatuses = ['Retrieved', 'Returned', 'Resolved', 'Brought Back'];
+        if (retrievedStatuses.includes(status) && updated.reporterId) {
+            notificationService.notifyUser(
+                updated.reporterId,
+                id,
+                'item_retrieved',
+                { itemName: updated.item }
+            ).catch(err => console.error('Notification error:', err));
+        }
 
     } catch (error) {
         console.error('Update report status error:', error);

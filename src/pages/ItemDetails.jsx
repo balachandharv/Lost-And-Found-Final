@@ -7,7 +7,7 @@ import { ArrowLeft, MapPin, Calendar, User, Phone, Mail, Search, Package, CheckC
 function ItemDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { reports, markAsRetrieved } = useReport();
+    const { reports, markAsRetrieved, updateReportStatus } = useReport();
     const { user } = useAuth();
     const [item, setItem] = useState(null);
 
@@ -147,6 +147,18 @@ function ItemDetails() {
                                 </button>
                             ) : (
                                 <div className="space-y-3">
+                                    {(user?.role === 'Admin' && item.status === 'PendingApproval') && (
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm("Approve this report for listing?")) {
+                                                    updateReportStatus(item.id, "Pending");
+                                                }
+                                            }}
+                                            className="btn bg-emerald-600 text-white hover:bg-emerald-700 w-full"
+                                        >
+                                            <CheckCircle size={18} className="mr-2 inline" /> Approve Listing
+                                        </button>
+                                    )}
                                     {item.type === 'Lost' && (
                                         <button
                                             onClick={() => navigate("/report-found")}

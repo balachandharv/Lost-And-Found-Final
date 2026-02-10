@@ -8,7 +8,9 @@ const dbPath = path.join(__dirname, 'database.json');
 const defaultData = {
   users: [],
   reports: [],
-  otps: []
+  otps: [],
+  deviceTokens: [],
+  notifications: []
 };
 
 // Load database from file

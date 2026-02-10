@@ -59,8 +59,9 @@ router.post('/request-otp', async (req, res) => {
 
         res.json({
             success: true,
-            message: 'OTP sent to your email',
-            userName: userExists.name
+            message: 'OTP sent to your email (Check Console/Alert for Dev)',
+            userName: userExists.name,
+            debugOtp: otp // TODO: Remove this in production!
         });
 
     } catch (error) {

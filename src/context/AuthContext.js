@@ -11,6 +11,9 @@ const DEFAULT_USERS = [
 ];
 
 export const AuthProvider = ({ children }) => {
+    // API URL - moved to top to prevent ReferenceError
+    const API_URL = "http://localhost:5000/api/auth";
+
     const [user, setUser] = useState(null);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -130,8 +133,6 @@ export const AuthProvider = ({ children }) => {
     };
 
     // --- Backend Integration for OTP ---
-
-    const API_URL = "http://localhost:5000/api/auth";
 
     const requestOtp = async (email, type = 'login') => {
         try {

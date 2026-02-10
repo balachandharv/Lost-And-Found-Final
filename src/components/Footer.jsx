@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Shield, ExternalLink } from 'lucide-react';
+import { Mail, Phone, MapPin, Instagram, Shield, Github, Linkedin } from 'lucide-react';
 
 function Footer() {
     return (
@@ -11,9 +11,7 @@ function Footer() {
                     {/* Brand Column */}
                     <div className="space-y-4">
                         <Link to="/" className="flex items-center gap-2 group">
-                            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-lg shadow-lg group-hover:bg-indigo-500 transition-colors">
-                                🔍
-                            </div>
+                            <img src="/logo_icon.png" alt="Logo" className="w-10 h-10 object-contain" />
                             <span className="text-xl font-bold text-white tracking-tight group-hover:text-indigo-400 transition-colors">
                                 CAMPUS
                                 <span className="text-indigo-500 text-sm font-semibold ml-1">PORTAL</span>
@@ -23,9 +21,9 @@ function Footer() {
                             The official centralized platform for reporting and recovering lost items across campus. Secure, fast, and community-driven.
                         </p>
                         <div className="flex gap-4 pt-4">
-                            <SocialLink icon={<Facebook size={18} />} href="#" />
-                            <SocialLink icon={<Twitter size={18} />} href="#" />
-                            <SocialLink icon={<Instagram size={18} />} href="#" />
+                            <SocialLink icon={<Github size={18} />} href="https://github.com/balachandharv" />
+                            <SocialLink icon={<Linkedin size={18} />} href="https://www.linkedin.com/in/balachandhar021" />
+                            <SocialLink icon={<Instagram size={18} />} href="https://www.instagram.com/bruty_boy_bc_?igsh=bjJoM3NhaDY4YXgy" />
                         </div>
                     </div>
 
@@ -57,15 +55,31 @@ function Footer() {
                         <ul className="space-y-4">
                             <li className="flex items-start gap-3">
                                 <MapPin size={20} className="text-indigo-500 shrink-0 mt-1" />
-                                <span className="text-sm">Student Center Building,<br />Room 101, Main Campus</span>
+                                <a
+                                    href="https://www.google.com/maps/search/?api=1&query=PSR+Engineering+College+Sivakasi"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm hover:text-white transition-colors hover:underline"
+                                >
+                                    PSR Engineering College,<br />Sivakasi
+                                </a>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Phone size={20} className="text-indigo-500 shrink-0" />
-                                <span className="text-sm hover:text-white transition-colors cursor-pointer">+1 (555) 123-4567</span>
+                                <a href="tel:+918428103075" className="text-sm hover:text-white transition-colors cursor-pointer hover:underline">
+                                    +91 8428103075
+                                </a>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Mail size={20} className="text-indigo-500 shrink-0" />
-                                <span className="text-sm hover:text-white transition-colors cursor-pointer">support@campusfound.edu</span>
+                                <a
+                                    href="https://mail.google.com/mail/?view=cm&fs=1&to=balachandhar021@gmail.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm hover:text-white transition-colors cursor-pointer hover:underline"
+                                >
+                                    balachandhar021@gmail.com
+                                </a>
                             </li>
                             <li className="flex items-center gap-3 pt-2">
                                 <Shield size={20} className="text-emerald-500 shrink-0" />
@@ -81,9 +95,9 @@ function Footer() {
                 <div className="container-custom py-6 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
                     <p>© 2026 Campus Lost & Found. All rights reserved.</p>
                     <div className="flex gap-6">
-                        <span className="hover:text-slate-300 cursor-pointer transition-colors">Security</span>
-                        <span className="hover:text-slate-300 cursor-pointer transition-colors">Accessibility</span>
-                        <span className="hover:text-slate-300 cursor-pointer transition-colors">Sitemap</span>
+                        <Link to="/security" className="hover:text-slate-300 transition-colors">Security</Link>
+                        <Link to="/accessibility" className="hover:text-slate-300 transition-colors">Accessibility</Link>
+                        <Link to="/sitemap" className="hover:text-slate-300 transition-colors">Sitemap</Link>
                     </div>
                 </div>
             </div>
@@ -103,6 +117,8 @@ const FooterLink = ({ to, label }) => (
 const SocialLink = ({ icon, href }) => (
     <a
         href={href}
+        target="_blank"
+        rel="noopener noreferrer"
         className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-indigo-600 hover:text-white transition-all transform hover:-translate-y-1"
     >
         {icon}

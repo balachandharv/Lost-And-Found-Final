@@ -2,7 +2,8 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
 import { useReport } from "../context/ReportContext";
-import { Search, Menu, X, Bell, User, LogOut, Box, PlusCircle, Shield, Home, Grid } from "lucide-react";
+import { Search, Menu, X, User, LogOut, Box, PlusCircle, Shield, Home, Grid } from "lucide-react";
+import NotificationBell from "./NotificationBell";
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -59,9 +60,7 @@ function Navbar() {
 
           {/* 2. Brand Logo */}
           <Link to="/" className="flex items-center gap-2.5 group relative z-10">
-            <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-sm group-hover:bg-indigo-700 transition-colors">
-              <Box size={20} />
-            </div>
+            <img src="/logo_icon.png" alt="Logo" className="w-10 h-10 object-contain" />
             <div className="flex flex-col">
               <span className="text-slate-900 text-lg font-bold tracking-tight leading-none">CAMPUS</span>
               <span className="text-indigo-600 text-xs font-bold tracking-widest uppercase">PORTAL</span>
@@ -131,9 +130,7 @@ function Navbar() {
                 </Link>
               )}
 
-              <button className="text-slate-500 hover:text-indigo-600 p-2 rounded-lg hover:bg-slate-100 transition-colors relative">
-                <Bell size={20} />
-              </button>
+              <NotificationBell />
 
               {user ? (
                 <div className="relative">
