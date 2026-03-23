@@ -100,7 +100,7 @@ router.post('/', verifyToken, upload.single('imageFile'), async (req, res) => {
             reportedBy: reportedBy || '',
             reporterEmail: reporterEmail || '',
             reporterId,
-            createdAt: new Date().toISOString()
+            createdAt: new Date()
         });
 
         const newReport = await db.getOne('reports', 'id', id);

@@ -43,7 +43,7 @@ router.post('/request-otp', otpLimiter, async (req, res) => {
             code: otp,
             expiresAt,
             used: 0,
-            createdAt: new Date().toISOString()
+            createdAt: new Date()
         });
 
         // Send OTP email
@@ -106,7 +106,7 @@ router.post('/register', async (req, res) => {
             password: hashedPassword,
             role: assignedRole,
             status: 'Active',
-            createdAt: new Date().toISOString()
+            createdAt: new Date()
         });
 
         res.json({ success: true, user: newUser });
@@ -366,7 +366,7 @@ router.post('/google', async (req, res) => {
                 status: 'Active',
                 googleId,
                 profileImage: picture || null,
-                createdAt: new Date().toISOString()
+                createdAt: new Date()
             });
             console.log('Created new Google user:', user.email);
         } else {
