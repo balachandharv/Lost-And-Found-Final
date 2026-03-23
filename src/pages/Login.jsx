@@ -86,7 +86,7 @@ function Login() {
         }
     };
 
-    // Validate college email - only PSR college IDs allowed
+    // Validate college email
     const validateCollegeEmail = (emailToCheck) => {
         const email = emailToCheck.toLowerCase().trim();
 
@@ -95,20 +95,7 @@ function Login() {
             return { valid: false, message: "Only PSR college email IDs are allowed (@psr.edu.in)" };
         }
 
-        // Extract the ID part before @
-        const idPart = email.split('@')[0];
-
-        // Valid format: 23it001 to 23it030
-        const validPattern = /^23it0(0[1-9]|[12][0-9]|30)$/;
-
-        if (!validPattern.test(idPart)) {
-            return { valid: false, message: "Invalid college ID. Only 23IT001 to 23IT030 are allowed." };
-        }
-
-        // Check if admin (23it008)
-        const isAdmin = idPart === '23it008';
-
-        return { valid: true, isAdmin };
+        return { valid: true };
     };
 
     // Handle Sign Up
@@ -131,7 +118,6 @@ function Login() {
             setError(emailValidation.message);
             setLoading(false);
             return;
-            // Allow admin signup for now if it's the specific email, logic handled in validateCollegeEmail
         }
 
         if (password.length < 6) {
@@ -146,8 +132,8 @@ function Login() {
             return;
         }
 
-        // Determine role based on email
-        const role = emailValidation.isAdmin ? "Admin" : "Student";
+        // Determine role
+        const role = "Student";
 
         try {
             const result = await register({ name, email: email.toLowerCase(), password, role });
@@ -513,7 +499,7 @@ function Login() {
                                             </div>
                                             {isSignUp && (
                                                 <p className="text-xs text-slate-400 mt-1.5 ml-1">
-                                                    Only PSR college IDs (23IT001-23IT030) allowed
+                                                    Use your official @psr.edu.in email
                                                 </p>
                                             )}
                                         </div>

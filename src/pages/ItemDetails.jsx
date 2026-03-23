@@ -110,17 +110,35 @@ function ItemDetails() {
 
                                 {item.type === 'Lost' ? (
                                     <>
-                                        <p className="text-slate-500 text-sm mb-3">If you found this item, please contact:</p>
+                                        <p className="text-slate-500 text-sm mb-3">If you found this item, please contact the reporter:</p>
                                         <div className="space-y-2">
                                             <p className="font-semibold text-indigo-600 text-lg">{item.reportedBy}</p>
 
-                                            {item.contact && (
-                                                <div className="flex items-center gap-2 text-slate-600 font-medium">
-                                                    {item.contact.includes("@") ? <Mail size={16} /> : <Phone size={16} />}
-                                                    {item.contact.includes("@") ? (
-                                                        <a href={`mailto:${item.contact}`} className="hover:text-indigo-600 hover:underline">{item.contact}</a>
-                                                    ) : (
-                                                        <a href={`tel:${item.contact}`} className="hover:text-indigo-600 hover:underline">{item.contact}</a>
+                                            {/* Only show contact details to the owner or admin */}
+                                            {(user?.role === 'Admin' || user?.email === item.reporterEmail) ? (
+                                                item.contact && (
+                                                    <div className="flex items-center gap-2 text-slate-600 font-medium">
+                                                        {item.contact.includes("@") ? <Mail size={16} /> : <Phone size={16} />}
+                                                        {item.contact.includes("@") ? (
+                                                            <a href={`mailto:${item.contact}`} className="hover:text-indigo-600 hover:underline">{item.contact}</a>
+                                                        ) : (
+                                                            <a href={`tel:${item.contact}`} className="hover:text-indigo-600 hover:underline">{item.contact}</a>
+                                                        )}
+                                                    </div>
+                                                )
+                                            ) : (
+                                                <div className="mt-2">
+                                                    <p className="text-xs text-slate-400 mb-2">Contact details are hidden for privacy.</p>
+                                                    {item.reporterEmail && user && (
+                                                        <a
+                                                            href={`mailto:${item.reporterEmail}?subject=Found your ${item.item}&body=Hi ${item.reportedBy}, I found your item "${item.item}" that was reported lost.`}
+                                                            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                                                        >
+                                                            <Mail size={16} /> Contact Reporter via Email
+                                                        </a>
+                                                    )}
+                                                    {!user && (
+                                                        <p className="text-xs text-amber-600 font-medium">Please login to contact the reporter.</p>
                                                     )}
                                                 </div>
                                             )}
@@ -130,7 +148,7 @@ function ItemDetails() {
                                     <>
                                         <p className="text-slate-500 text-sm mb-3">This item is located at:</p>
                                         <p className="font-bold text-emerald-600 text-lg mb-2">
-                                            {item.status === 'Available' || item.status === 'Verified' ? item.reportedBy : item.status}
+                                            {item.reportedBy}
                                         </p>
                                         <p className="text-xs text-slate-400">
                                             {isRetrieved ? "Item has been successfully returned." : "Please visit with proof of ownership to claim."}

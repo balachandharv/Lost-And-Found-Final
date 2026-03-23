@@ -79,11 +79,12 @@ export const getFCMToken = async () => {
 // Register token with backend
 export const registerTokenWithBackend = async (userId, token) => {
     try {
+        const authToken = localStorage.getItem('token');
         const response = await fetch('http://localhost:5000/api/notifications/register-token', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-user-id': userId
+                'Authorization': authToken ? `Bearer ${authToken}` : ''
             },
             body: JSON.stringify({
                 token,
@@ -104,11 +105,12 @@ export const registerTokenWithBackend = async (userId, token) => {
 // Unregister token (on logout)
 export const unregisterToken = async (userId, token) => {
     try {
+        const authToken = localStorage.getItem('token');
         const response = await fetch('http://localhost:5000/api/notifications/unregister-token', {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
-                'x-user-id': userId
+                'Authorization': authToken ? `Bearer ${authToken}` : ''
             },
             body: JSON.stringify({ token })
         });
@@ -134,8 +136,9 @@ export const onForegroundMessage = (callback) => {
 // Fetch notifications from backend
 export const getNotifications = async (userId) => {
     try {
+        const authToken = localStorage.getItem('token');
         const response = await fetch('http://localhost:5000/api/notifications', {
-            headers: { 'x-user-id': userId }
+            headers: { 'Authorization': authToken ? `Bearer ${authToken}` : '' }
         });
         const data = await response.json();
         return data.notifications || [];
@@ -148,8 +151,9 @@ export const getNotifications = async (userId) => {
 // Get unread count
 export const getUnreadCount = async (userId) => {
     try {
+        const authToken = localStorage.getItem('token');
         const response = await fetch('http://localhost:5000/api/notifications/unread-count', {
-            headers: { 'x-user-id': userId }
+            headers: { 'Authorization': authToken ? `Bearer ${authToken}` : '' }
         });
         const data = await response.json();
         return data.count || 0;
@@ -162,9 +166,10 @@ export const getUnreadCount = async (userId) => {
 // Mark notification as read
 export const markAsRead = async (userId, notificationId) => {
     try {
+        const authToken = localStorage.getItem('token');
         const response = await fetch(`http://localhost:5000/api/notifications/${notificationId}/read`, {
             method: 'PATCH',
-            headers: { 'x-user-id': userId }
+            headers: { 'Authorization': authToken ? `Bearer ${authToken}` : '' }
         });
         return response.ok;
     } catch (error) {
@@ -176,9 +181,10 @@ export const markAsRead = async (userId, notificationId) => {
 // Mark all as read
 export const markAllAsRead = async (userId) => {
     try {
+        const authToken = localStorage.getItem('token');
         const response = await fetch('http://localhost:5000/api/notifications/read-all', {
             method: 'PATCH',
-            headers: { 'x-user-id': userId }
+            headers: { 'Authorization': authToken ? `Bearer ${authToken}` : '' }
         });
         return response.ok;
     } catch (error) {
@@ -215,9 +221,10 @@ export const setupNotifications = async (userId) => {
 // Clear all notifications
 export const clearAllNotifications = async (userId) => {
     try {
+        const authToken = localStorage.getItem('token');
         const response = await fetch('http://localhost:5000/api/notifications/clear-all', {
             method: 'DELETE',
-            headers: { 'x-user-id': userId }
+            headers: { 'Authorization': authToken ? `Bearer ${authToken}` : '' }
         });
         return response.ok;
     } catch (error) {

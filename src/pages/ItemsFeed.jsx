@@ -57,7 +57,7 @@ function ItemsFeed() {
         (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
       // 2. Approval Status (Only show approved or active items)
-      const isApproved = item.status !== "PendingApproval";
+      const isApproved = item.status !== "PendingApproval" && item.status !== "Rejected";
 
       // 3. Type/Status Filter
       let matchesType = false;

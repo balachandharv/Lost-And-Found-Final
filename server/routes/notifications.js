@@ -3,19 +3,29 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const notificationService = require('../services/notificationService');
+const jwt = require('jsonwebtoken');
+const config = require('../config');
 
-// Middleware to check authentication
+// Middleware to check authentication (JWT verification)
 const requireAuth = (req, res, next) => {
-    const userId = req.headers['x-user-id'];
-    if (!userId) {
-        return res.status(401).json({ error: 'Authentication required' });
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, config.JWT_SECRET);
+        req.userId = decoded.id;
+        next();
+    } catch (error) {
+        console.error('Notification auth error:', error.message);
+        res.status(401).json({ error: 'Invalid or expired token' });
     }
-    req.userId = userId;
-    next();
 };
 
 // Register device token for push notifications
-router.post('/register-token', requireAuth, (req, res) => {
+router.post('/register-token', requireAuth, async (req, res) => {
     try {
         const { token, device, browser } = req.body;
         const userId = req.userId;
@@ -25,13 +35,13 @@ router.post('/register-token', requireAuth, (req, res) => {
         }
 
         // Check if token already exists
-        const existing = db.getOne('deviceTokens', 'token', token);
+        const existing = await db.getOne('deviceTokens', 'token', token);
         if (existing) {
             // Update existing token with new user if different
             if (existing.userId !== userId) {
-                db.update('deviceTokens', 'token', token, {
+                await db.update('deviceTokens', 'token', token, {
                     userId,
-                    lastUsed: new Date().toISOString()
+                    lastUsed: new Date()
                 });
             }
             return res.json({ success: true, message: 'Token updated' });
@@ -44,11 +54,11 @@ router.post('/register-token', requireAuth, (req, res) => {
             token,
             device: device || 'desktop',
             browser: browser || 'unknown',
-            createdAt: new Date().toISOString(),
-            lastUsed: new Date().toISOString()
+            createdAt: new Date(),
+            lastUsed: new Date()
         };
 
-        db.insert('deviceTokens', tokenEntry);
+        await db.insert('deviceTokens', tokenEntry);
         res.json({ success: true, message: 'Token registered' });
     } catch (error) {
         console.error('Register token error:', error);
@@ -57,17 +67,19 @@ router.post('/register-token', requireAuth, (req, res) => {
 });
 
 // Unregister device token (on logout)
-router.delete('/unregister-token', requireAuth, (req, res) => {
+router.delete('/unregister-token', requireAuth, async (req, res) => {
     try {
         const { token } = req.body;
         const userId = req.userId;
 
         if (token) {
-            db.delete('deviceTokens', 'token', token);
+            await db.delete('deviceTokens', 'token', token);
         } else {
             // Remove all tokens for this user
-            const tokens = db.getAll('deviceTokens').filter(t => t.userId === userId);
-            tokens.forEach(t => db.delete('deviceTokens', 'id', t.id));
+            const tokens = (await db.getAll('deviceTokens')).filter(t => t.userId === userId);
+            for (const t of tokens) {
+                await db.delete('deviceTokens', 'id', t.id);
+            }
         }
 
         res.json({ success: true, message: 'Token(s) removed' });
@@ -78,12 +90,12 @@ router.delete('/unregister-token', requireAuth, (req, res) => {
 });
 
 // Get user notifications
-router.get('/', requireAuth, (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
     try {
         const userId = req.userId;
         const limit = parseInt(req.query.limit) || 50;
 
-        const notifications = notificationService.getUserNotifications(userId, limit);
+        const notifications = await notificationService.getUserNotifications(userId, limit);
         res.json({ notifications });
     } catch (error) {
         console.error('Get notifications error:', error);
@@ -92,10 +104,10 @@ router.get('/', requireAuth, (req, res) => {
 });
 
 // Get unread count
-router.get('/unread-count', requireAuth, (req, res) => {
+router.get('/unread-count', requireAuth, async (req, res) => {
     try {
         const userId = req.userId;
-        const count = notificationService.getUnreadCount(userId);
+        const count = await notificationService.getUnreadCount(userId);
         res.json({ count });
     } catch (error) {
         console.error('Get unread count error:', error);
@@ -104,10 +116,10 @@ router.get('/unread-count', requireAuth, (req, res) => {
 });
 
 // Mark notification as read
-router.patch('/:id/read', requireAuth, (req, res) => {
+router.patch('/:id/read', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
-        const result = notificationService.markAsRead(id);
+        const result = await notificationService.markAsRead(id);
 
         if (result) {
             res.json({ success: true });
@@ -121,10 +133,10 @@ router.patch('/:id/read', requireAuth, (req, res) => {
 });
 
 // Mark all as read
-router.patch('/read-all', requireAuth, (req, res) => {
+router.patch('/read-all', requireAuth, async (req, res) => {
     try {
         const userId = req.userId;
-        const count = notificationService.markAllAsRead(userId);
+        const count = await notificationService.markAllAsRead(userId);
         res.json({ success: true, markedCount: count });
     } catch (error) {
         console.error('Mark all as read error:', error);
@@ -133,18 +145,15 @@ router.patch('/read-all', requireAuth, (req, res) => {
 });
 
 // Clear all notifications for user
-router.delete('/clear-all', requireAuth, (req, res) => {
+router.delete('/clear-all', requireAuth, async (req, res) => {
     try {
         const userId = req.userId;
-        const db = require('../db');
+        const { pool } = require('../db');
 
-        // Get all notifications for this user and delete them
-        const allNotifications = db.getAll('notifications').filter(n => n.userId === userId);
-        allNotifications.forEach(n => {
-            db.delete('notifications', 'id', n.id);
-        });
+        // Delete all notifications for this user directly via SQL
+        const [result] = await pool.query('DELETE FROM notifications WHERE user_id = ?', [userId]);
 
-        res.json({ success: true, deletedCount: allNotifications.length });
+        res.json({ success: true, deletedCount: result.affectedRows });
     } catch (error) {
         console.error('Clear all notifications error:', error);
         res.status(500).json({ error: 'Failed to clear notifications' });

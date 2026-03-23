@@ -28,9 +28,9 @@ const verifyAdmin = (req, res, next) => {
 };
 
 // Get all users (Admin only)
-router.get('/', verifyAdmin, (req, res) => {
+router.get('/', verifyAdmin, async (req, res) => {
     try {
-        const users = db.getAll('users').map(u => ({
+        const users = (await db.getAll('users')).map(u => ({
             id: u.id,
             name: u.name,
             email: u.email,
@@ -46,7 +46,7 @@ router.get('/', verifyAdmin, (req, res) => {
 });
 
 // Update user status (Admin only)
-router.patch('/:id/status', verifyAdmin, (req, res) => {
+router.patch('/:id/status', verifyAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
@@ -55,7 +55,7 @@ router.patch('/:id/status', verifyAdmin, (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid status' });
         }
 
-        const updated = db.update('users', 'id', id, { status });
+        const updated = await db.update('users', 'id', id, { status });
 
         if (!updated) {
             return res.status(404).json({ success: false, message: 'User not found' });

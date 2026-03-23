@@ -173,7 +173,9 @@ function Profile() {
                                                             <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
                                                                 <Calendar size={12} /> {report.date}
                                                                 <span>•</span>
-                                                                <span className={report.status === 'Resolved' ? 'text-emerald-600 font-medium' : ''}>{report.status}</span>
+                                                                <span className={report.status === 'Resolved' ? 'text-emerald-600 font-medium' : report.status === 'PendingApproval' ? 'text-amber-600 font-semibold bg-amber-50 px-1.5 py-0.5 rounded' : report.status === 'Rejected' ? 'text-red-600 font-semibold bg-red-50 px-1.5 py-0.5 rounded' : ''}>
+                                                                    {report.status === 'PendingApproval' ? '⏳ Awaiting Approval' : report.status === 'Rejected' ? '❌ Rejected' : report.status}
+                                                                </span>
                                                             </div>
                                                         </div>
                                                     </div>

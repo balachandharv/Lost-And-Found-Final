@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // Validate college email - only PSR college IDs allowed
+    // Validate college email
     const isValidCollegeEmail = (emailToCheck) => {
         const email = emailToCheck.toLowerCase().trim();
 
@@ -84,17 +84,7 @@ export const AuthProvider = ({ children }) => {
             return { valid: false, message: "Only PSR college email IDs are allowed." };
         }
 
-        // Extract the ID part before @
-        const idPart = email.split('@')[0];
-
-        // Valid format: 23it001 to 23it030
-        const validPattern = /^23it0(0[1-9]|[12][0-9]|30)$/;
-
-        if (!validPattern.test(idPart)) {
-            return { valid: false, message: "Invalid college ID. Only 23IT001 to 23IT030 are allowed." };
-        }
-
-        return { valid: true, isAdmin: idPart === '23it008' };
+        return { valid: true };
     };
 
     // Register new user (Backend)
@@ -105,7 +95,7 @@ export const AuthProvider = ({ children }) => {
             return { success: false, message: validation.message };
         }
 
-        const assignedRole = validation.isAdmin ? "Admin" : role;
+        const assignedRole = role;
 
         try {
             const response = await fetch(`${API_URL}/register`, {

@@ -12,18 +12,21 @@ const notificationRoutes = require('./routes/notifications');
 // Initialize Firebase (for push notifications)
 require('./firebase');
 
-// Initialize database (this creates tables on first run)
-require('./db');
+// Initialize MySQL database
+const { initDB } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-    origin: 'http://localhost:3000', // React dev server
+    origin: true,
     credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+
+// Serve uploaded images as static files
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -33,7 +36,7 @@ app.use('/api/notifications', notificationRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Server is running' });
+    res.json({ status: 'ok', message: 'Server is running', database: 'MySQL' });
 });
 
 // Socket.io Setup
@@ -43,7 +46,7 @@ const { Server } = require('socket.io');
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: true,
         methods: ["GET", "POST"],
         credentials: true
     }
@@ -63,14 +66,28 @@ io.on('connection', (socket) => {
     });
 });
 
-// Start server
-server.listen(PORT, () => {
-    console.log(`
+// Start server AFTER MySQL is ready
+const startServer = async () => {
+    try {
+        // Initialize MySQL tables
+        await initDB();
+
+        server.listen(PORT, () => {
+            console.log(`
   ╔════════════════════════════════════════════╗
   ║   🔍 College Lost & Found Backend          ║
   ║   Server running on port ${PORT}              ║
   ║   API: http://localhost:${PORT}/api           ║
+  ║   Database: MySQL                          ║
   ║   Socket.io: Enabled                       ║
   ╚════════════════════════════════════════════╝
   `);
-});
+        });
+    } catch (error) {
+        console.error('❌ Failed to start server:', error.message);
+        console.error('   Make sure MySQL is running on localhost:3306');
+        process.exit(1);
+    }
+};
+
+startServer();

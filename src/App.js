@@ -6,6 +6,7 @@ import { ReportProvider } from "./context/ReportContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { Toaster } from "react-hot-toast";
 
 // Pages
 import Home from "./pages/Home";
@@ -100,6 +101,7 @@ function AppContent() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <Toaster position="top-center" />
       {!isAuthPage && <Navbar />}
       <main className="flex-grow">
         <AnimatedRoutes />

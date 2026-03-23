@@ -19,6 +19,7 @@ import {
   Filter
 } from "lucide-react";
 import PageTransition from "../components/PageTransition";
+import toast from "react-hot-toast";
 import { useReport } from "../context/ReportContext";
 import { useAuth } from "../context/AuthContext";
 import ActiveUsersWidget from "../components/ActiveUsersWidget";

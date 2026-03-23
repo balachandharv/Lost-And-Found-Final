@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { ArrowLeft, Upload, X, AlertCircle } from 'lucide-react';
 import { motion } from "framer-motion";
 import PageTransition from "../components/PageTransition";
+import toast from "react-hot-toast";
 
 function ReportFound() {
     const navigate = useNavigate();
@@ -29,6 +30,7 @@ function ReportFound() {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [fileError, setFileError] = useState("");
     const [isImage, setIsImage] = useState(true);
+    const [selectedFile, setSelectedFile] = useState(null);
 
     // Pre-fill form if navigated from "Found This?" button
     React.useEffect(() => {
@@ -70,7 +72,7 @@ function ReportFound() {
         if (file.size > 5 * 1024 * 1024) {
             setFileError("File is too large. Maximum size is 5MB.");
             setPreviewUrl(null);
-            setFormData(prev => ({ ...prev, image: null }));
+            setSelectedFile(null);
             return;
         }
 
@@ -81,34 +83,54 @@ function ReportFound() {
         // Create preview URL
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
-
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setFormData(prev => ({ ...prev, image: reader.result }));
-        };
-        reader.readAsDataURL(file);
+        setSelectedFile(file);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const newReport = {
-            id: "R" + (Math.floor(Math.random() * 9000) + 1000),
-            item: formData.title,
-            category: formData.category, // Added category
-            image: formData.image, // Add image from state
-            location: formData.location || "Unknown",
-            type: "Found",
-            reportedBy: user?.name || formData.contact || "Student",
-            reporterEmail: user?.email, // Store email for permission checks
-            date: formData.date || new Date().toISOString().split('T')[0],
-            status: "Available" // Found items default to Available/Verified
-        };
+        // Build FormData for file upload
+        const submitData = new FormData();
+        submitData.append('item', formData.title);
+        submitData.append('category', formData.category);
+        submitData.append('location', formData.location || 'Unknown');
+        submitData.append('type', 'Found');
+        submitData.append('reportedBy', user?.name || formData.contact || 'Student');
+        submitData.append('reporterEmail', user?.email || '');
+        submitData.append('date', formData.date || new Date().toISOString().split('T')[0]);
+        submitData.append('description', formData.description || '');
+        submitData.append('contact', formData.contact || '');
 
-        addReport(newReport);
+        if (selectedFile) {
+            submitData.append('imageFile', selectedFile);
+        }
 
-        alert("Report submitted successfully! Thank you for your honesty.");
-        navigate("/items"); // Navigate back to items feed
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5000/api/reports', {
+                method: 'POST',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                body: submitData
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success("Report submitted successfully! It will be listed after Admin approval.", {
+                    duration: 4000,
+                    style: {
+                        borderRadius: '10px',
+                        background: '#333',
+                        color: '#fff',
+                    },
+                });
+                navigate("/items");
+            } else {
+                toast.error(data.message || "Failed to submit report");
+            }
+        } catch (err) {
+            console.error('Submit error:', err);
+            toast.error("Failed to submit. Make sure the server is running.");
+        }
     };
 
     return (

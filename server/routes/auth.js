@@ -5,9 +5,17 @@ const jwt = require('jsonwebtoken');
 const db = require('../db');
 const config = require('../config');
 const { generateOTP, sendOTPEmail } = require('../services/emailService');
+const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
+
+const otpLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Limit each IP to 5 requests per windowMs
+    message: { success: false, message: 'Too many OTP requests from this IP, please try again later' }
+});
 
 // Request OTP - Step 1
-router.post('/request-otp', async (req, res) => {
+router.post('/request-otp', otpLimiter, async (req, res) => {
     try {
         const { email, type = 'login' } = req.body;
 
@@ -16,7 +24,7 @@ router.post('/request-otp', async (req, res) => {
         }
 
         // Check if user exists in DB - if not, DENY OTP
-        const userExists = db.getOne('users', 'email', email.toLowerCase());
+        const userExists = await db.getOne('users', 'email', email.toLowerCase());
         if (!userExists) {
             return res.status(404).json({
                 success: false,
@@ -24,21 +32,12 @@ router.post('/request-otp', async (req, res) => {
             });
         }
 
-        // Check if email is in whitelist OR pattern allowed
-        // (We keep this check if you want to restrict who can even have an account,
-        // but since we checked DB existence, they must have passed registration logic already.
-        // So we can arguably skip strict pattern check here if we trust the DB content,
-        // BUT let's keep it for safety if you want to ban users later by removing from whitelist)
-
-        // Actually, if they are in DB, they are valid.
-        // Let's just use the DB user info for the email.
-
         // Generate OTP
         const otp = generateOTP();
         const expiresAt = new Date(Date.now() + config.OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
 
         // Store OTP in database
-        db.insert('otps', {
+        await db.insert('otps', {
             id: `OTP${Date.now()}`,
             email: email.toLowerCase(),
             code: otp,
@@ -79,35 +78,32 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ success: false, message: 'All fields are required' });
         }
 
-        // Validate Email Range and Role
+        // Validate Email Range
         const emailLower = email.toLowerCase().trim();
         if (!emailLower.endsWith('@psr.edu.in')) {
             return res.status(400).json({ success: false, message: 'Only @psr.edu.in emails are allowed' });
         }
 
-        const idPart = emailLower.split('@')[0];
-        const validPattern = /^23it0(0[1-9]|[12][0-9]|30)$/;
-
-        if (!validPattern.test(idPart)) {
-            return res.status(400).json({ success: false, message: 'Invalid ID. Allowed: 23IT001 to 23IT030' });
-        }
-
-        // Determine Role
-        const assignedRole = (idPart === '23it008') ? 'Admin' : 'Student';
+        // Accept role from frontend defaults, fallback to Student
+        const assignedRole = role === 'Admin' ? 'Admin' : 'Student';
 
         // Check if user already exists
-        const existingUser = db.getOne('users', 'email', emailLower);
+        const existingUser = await db.getOne('users', 'email', emailLower);
         if (existingUser) {
             return res.status(400).json({ success: false, message: 'User already exists' });
         }
 
+        // Hash the password securely
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         // Create new user
         const userId = `U${Date.now()}`;
-        const newUser = db.insert('users', {
+        const newUser = await db.insert('users', {
             id: userId,
             name,
             email: emailLower,
-            password, // In a real app, hash this!
+            password: hashedPassword,
             role: assignedRole,
             status: 'Active',
             createdAt: new Date().toISOString()
@@ -122,13 +118,25 @@ router.post('/register', async (req, res) => {
 });
 
 // Password Login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = db.getOne('users', 'email', email.toLowerCase());
+        const user = await db.getOne('users', 'email', email.toLowerCase());
 
-        if (!user || user.password !== password) {
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'Invalid email or password' });
+        }
+
+        // Fallback for backwards compatibility with plain text passwords during dev
+        let isMatch = false;
+        if (user.password && user.password.startsWith('$2')) {
+            isMatch = await bcrypt.compare(password, user.password);
+        } else {
+            isMatch = user.password === password;
+        }
+
+        if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid email or password' });
         }
 
@@ -156,7 +164,7 @@ router.post('/login', (req, res) => {
 });
 
 // Verify OTP - Step 2
-router.post('/verify-otp', (req, res) => {
+router.post('/verify-otp', async (req, res) => {
     try {
         const { email, otp } = req.body;
 
@@ -165,7 +173,7 @@ router.post('/verify-otp', (req, res) => {
         }
 
         // Find valid OTP
-        const otpRecord = db.findValidOTP(email.toLowerCase(), otp);
+        const otpRecord = await db.findValidOTP(email.toLowerCase(), otp);
 
         if (!otpRecord) {
             return res.status(401).json({
@@ -175,16 +183,12 @@ router.post('/verify-otp', (req, res) => {
         }
 
         // Mark OTP as used
-        db.markOTPUsed(otpRecord.id);
-
-        // MARKED AS USED ABOVE
+        await db.markOTPUsed(otpRecord.id);
 
         // Check if user exists in database
-        let user = db.getOne('users', 'email', email.toLowerCase());
+        let user = await db.getOne('users', 'email', email.toLowerCase());
 
         if (!user) {
-            // This should theoretically not happen if request-otp blocks non-existing users,
-            // BUT if a user was deleted between request and verify, prompt error.
             return res.status(404).json({
                 success: false,
                 message: 'User account not found.'
@@ -229,7 +233,7 @@ router.post('/verify-otp', (req, res) => {
 });
 
 // Reset Password
-router.post('/reset-password', (req, res) => {
+router.post('/reset-password', async (req, res) => {
     try {
         const { email, otp, newPassword } = req.body;
 
@@ -238,22 +242,26 @@ router.post('/reset-password', (req, res) => {
         }
 
         // Verify OTP
-        const otpRecord = db.findValidOTP(email.toLowerCase(), otp);
+        const otpRecord = await db.findValidOTP(email.toLowerCase(), otp);
         if (!otpRecord) {
             return res.status(401).json({ success: false, message: 'Invalid or expired OTP' });
         }
 
         // Mark OTP as used
-        db.markOTPUsed(otpRecord.id);
+        await db.markOTPUsed(otpRecord.id);
 
         // Find user
-        const user = db.getOne('users', 'email', email.toLowerCase());
+        const user = await db.getOne('users', 'email', email.toLowerCase());
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
         // Update password
-        db.update('users', 'id', user.id, { password: newPassword });
+        await db.update('users', 'id', user.id, { password: hashedPassword });
 
         res.json({ success: true, message: 'Password reset successfully' });
 
@@ -264,7 +272,7 @@ router.post('/reset-password', (req, res) => {
 });
 
 // Get current user from token
-router.get('/me', (req, res) => {
+router.get('/me', async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -274,7 +282,7 @@ router.get('/me', (req, res) => {
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, config.JWT_SECRET);
 
-        const user = db.getOne('users', 'id', decoded.id);
+        const user = await db.getOne('users', 'id', decoded.id);
 
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
@@ -301,7 +309,7 @@ router.get('/me', (req, res) => {
 });
 
 // Check if Google user exists (for modal flow)
-router.post('/google-check', (req, res) => {
+router.post('/google-check', async (req, res) => {
     try {
         const { email } = req.body;
 
@@ -309,7 +317,7 @@ router.post('/google-check', (req, res) => {
             return res.status(400).json({ success: false, message: 'Email is required' });
         }
 
-        const user = db.getOne('users', 'email', email.toLowerCase());
+        const user = await db.getOne('users', 'email', email.toLowerCase());
 
         if (user) {
             res.json({
@@ -334,7 +342,7 @@ router.post('/google-check', (req, res) => {
 });
 
 // Google OAuth Login/Register
-router.post('/google', (req, res) => {
+router.post('/google', async (req, res) => {
     try {
         const { email, name, googleId, picture } = req.body;
 
@@ -343,15 +351,14 @@ router.post('/google', (req, res) => {
         }
 
         // Check if user exists
-        let user = db.getOne('users', 'email', email.toLowerCase());
+        let user = await db.getOne('users', 'email', email.toLowerCase());
 
         if (!user) {
             // Create new user from Google auth
-            // Check if this email should be admin
             const isAdmin = email.toLowerCase() === 'balachandhar021@gmail.com';
 
             const userId = `U${Date.now()}`;
-            user = db.insert('users', {
+            user = await db.insert('users', {
                 id: userId,
                 name: name || email.split('@')[0],
                 email: email.toLowerCase(),
@@ -365,7 +372,7 @@ router.post('/google', (req, res) => {
         } else {
             // Update Google ID if not set
             if (!user.googleId) {
-                db.update('users', 'id', user.id, { googleId, profileImage: picture });
+                await db.update('users', 'id', user.id, { googleId, profileImage: picture });
             }
         }
 

@@ -70,7 +70,7 @@ public class ReportController {
                 .description(request.getDescription() != null ? request.getDescription() : "")
                 .location(request.getLocation())
                 .type(request.getType())
-                .status("Pending")
+                .status("PendingApproval")
                 .date(request.getDate())
                 .image(request.getImage() != null ? request.getImage() : "")
                 .contact(request.getContact() != null ? request.getContact() : "")
@@ -84,17 +84,6 @@ public class ReportController {
         
         response.put("success", true);
         response.put("report", newReport);
-        
-        // Trigger notification broadcast (async)
-        String notificationType = request.getType().equals("Lost") ? "lost_posted" : "found_posted";
-        try {
-            notificationService.broadcastNotification(
-                    reporterId, id, notificationType, 
-                    request.getItem(), request.getLocation()
-            );
-        } catch (Exception e) {
-            System.err.println("Notification broadcast error: " + e.getMessage());
-        }
         
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -126,7 +115,7 @@ public class ReportController {
         Map<String, Object> response = new HashMap<>();
         String status = request.get("status");
         
-        List<String> validStatuses = Arrays.asList("Pending", "Retrieved", "Returned", "Resolved", "Brought Back");
+        List<String> validStatuses = Arrays.asList("PendingApproval", "Pending", "Retrieved", "Returned", "Resolved", "Brought Back");
         if (status == null || !validStatuses.contains(status)) {
             response.put("success", false);
             response.put("message", "Invalid status");
@@ -147,6 +136,18 @@ public class ReportController {
         
         response.put("success", true);
         response.put("report", report);
+        
+        if ("Pending".equals(status)) {
+            String notificationType = report.getType().equals("Lost") ? "lost_posted" : "found_posted";
+            try {
+                notificationService.broadcastNotification(
+                        report.getReporterId(), id, notificationType, 
+                        report.getItem(), report.getLocation()
+                );
+            } catch (Exception e) {
+                System.err.println("Notification broadcast error: " + e.getMessage());
+            }
+        }
         
         // Notify item owner if status changed to retrieved/returned
         List<String> retrievedStatuses = Arrays.asList("Retrieved", "Returned", "Resolved", "Brought Back");

@@ -30,7 +30,7 @@ const templates = {
 const generateId = () => 'N' + Date.now() + Math.random().toString(36).substr(2, 4);
 
 // Save notification to database (fallback + history)
-const saveNotification = (userId, itemId, type, title, body, clickAction) => {
+const saveNotification = async (userId, itemId, type, title, body, clickAction) => {
     const notification = {
         id: generateId(),
         userId,
@@ -40,12 +40,12 @@ const saveNotification = (userId, itemId, type, title, body, clickAction) => {
         body,
         icon: "/logo_icon.png",
         clickAction: clickAction || `/item/${itemId}`,
-        isRead: false,
-        isSent: false,
-        createdAt: new Date().toISOString()
+        isRead: 0,
+        isSent: 0,
+        createdAt: new Date()
     };
 
-    db.insert('notifications', notification);
+    await db.insert('notifications', notification);
     return notification;
 };
 
@@ -57,7 +57,7 @@ const sendPushNotification = async (userId, notification) => {
     }
 
     // Get user's device tokens
-    const tokens = db.getAll('deviceTokens').filter(t => t.userId === userId);
+    const tokens = (await db.getAll('deviceTokens')).filter(t => t.userId === userId);
 
     if (tokens.length === 0) {
         console.log(`No device tokens for user ${userId}`);
@@ -93,7 +93,7 @@ const sendPushNotification = async (userId, notification) => {
             successCount++;
 
             // Update last used timestamp
-            db.update('deviceTokens', 'id', tokenDoc.id, {
+            await db.update('deviceTokens', 'id', tokenDoc.id, {
                 lastUsed: new Date().toISOString()
             });
         } catch (error) {
@@ -102,7 +102,7 @@ const sendPushNotification = async (userId, notification) => {
             // Remove invalid tokens
             if (error.code === 'messaging/invalid-registration-token' ||
                 error.code === 'messaging/registration-token-not-registered') {
-                db.delete('deviceTokens', 'id', tokenDoc.id);
+                await db.delete('deviceTokens', 'id', tokenDoc.id);
                 console.log(`Removed invalid token: ${tokenDoc.id}`);
             }
         }
@@ -135,7 +135,7 @@ const notifyUser = async (userId, itemId, type, customData = {}) => {
     const clickAction = `/item/${itemId}`;
 
     // Save to database (always)
-    const notification = saveNotification(
+    const notification = await saveNotification(
         userId,
         itemId,
         type,
@@ -144,72 +144,75 @@ const notifyUser = async (userId, itemId, type, customData = {}) => {
         clickAction
     );
 
-    // Try to send push notification
-    const sent = await sendPushNotification(userId, notification);
-
-    // Update sent status
-    if (sent) {
-        db.update('notifications', 'id', notification.id, { isSent: true });
-    }
+    // Try to send push notification (async - don't block DB save)
+    sendPushNotification(userId, notification).then(sent => {
+        if (sent) {
+            db.update('notifications', 'id', notification.id, { isSent: true })
+                .catch(err => console.error('Error updating isSent:', err));
+        }
+    });
 
     return notification;
 };
 
-// Broadcast notification to ALL users (for testing, includes sender)
+// Broadcast notification to ALL users (Parallel and Exclution logic fixed)
 const broadcastNotification = async (excludeUserId, itemId, type, customData = {}) => {
-    const allUsers = db.getAll('users');
-    const results = [];
+    const allUsers = await db.getAll('users');
+    
+    // Filter out the excluded user (don't notify yourself)
+    const targetUsers = allUsers.filter(user => user.id !== excludeUserId);
 
-    console.log(`Broadcasting ${type} notification to ${allUsers.length} users`);
+    console.log(`🚀 Broadcasting ${type} to ${targetUsers.length} users (excluding ${excludeUserId})`);
 
-    for (const user of allUsers) {
-        // For now, notify ALL users including the sender (for testing)
-        try {
-            const result = await notifyUser(user.id, itemId, type, customData);
-            results.push(result);
-            console.log(`Notification created for user ${user.id}: ${result.title}`);
-        } catch (error) {
-            console.error(`Failed to notify user ${user.id}:`, error.message);
-        }
-    }
+    // Use Promise.all to run in parallel + catch individual errors within map
+    const promises = targetUsers.map(user => 
+        notifyUser(user.id, itemId, type, customData)
+            .catch(err => {
+                console.error(`Failed to notify ${user.id}:`, err.message);
+                return null;
+            })
+    );
 
-    console.log(`Broadcast complete: ${results.length} notifications created`);
-    return results;
+    const results = await Promise.all(promises);
+    const successCount = results.filter(r => r !== null).length;
+
+    console.log(`✅ Broadcast complete: ${successCount}/${targetUsers.length} notifications created`);
+    return results.filter(r => r !== null);
 };
 
 // Get unread count for user
-const getUnreadCount = (userId) => {
-    const notifications = db.getAll('notifications').filter(
-        n => n.userId === userId && !n.isRead
+const getUnreadCount = async (userId) => {
+    const { pool } = require('../db');
+    const [rows] = await pool.query(
+        'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0',
+        [userId]
     );
-    return notifications.length;
+    return rows[0].count;
 };
 
-// Get user notifications
-const getUserNotifications = (userId, limit = 50) => {
-    const notifications = db.getAll('notifications')
-        .filter(n => n.userId === userId)
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, limit);
-    return notifications;
+// Get user notifications (using DB utility for cleaner code)
+const getUserNotifications = async (userId, limit = 50) => {
+    const { pool, toCamelCase } = require('../db');
+    const [rows] = await pool.query(
+        'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ?',
+        [userId, limit]
+    );
+    return rows.map(row => toCamelCase(row));
 };
 
 // Mark notification as read
-const markAsRead = (notificationId) => {
-    return db.update('notifications', 'id', notificationId, { isRead: true });
+const markAsRead = async (notificationId) => {
+    return await db.update('notifications', 'id', notificationId, { isRead: 1 });
 };
 
 // Mark all as read for user
-const markAllAsRead = (userId) => {
-    const notifications = db.getAll('notifications').filter(
-        n => n.userId === userId && !n.isRead
+const markAllAsRead = async (userId) => {
+    const { pool } = require('../db');
+    const [result] = await pool.query(
+        'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0',
+        [userId]
     );
-
-    notifications.forEach(n => {
-        db.update('notifications', 'id', n.id, { isRead: true });
-    });
-
-    return notifications.length;
+    return result.affectedRows;
 };
 
 module.exports = {
