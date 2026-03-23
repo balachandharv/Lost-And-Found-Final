@@ -124,6 +124,16 @@ router.delete('/:id', verifyToken, async (req, res) => {
         }
 
         res.json({ success: true, message: 'Report rejected' });
+
+        // Notify reporter of rejection
+        if (updated.reporterId) {
+            notificationService.notifyUser(
+                updated.reporterId,
+                id,
+                'report_rejected',
+                { itemName: updated.item }
+            ).catch(err => console.error('Notification error:', err));
+        }
     } catch (error) {
         console.error('Delete report error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
@@ -158,6 +168,26 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
                 notificationType,
                 { itemName: updated.item, location: updated.location }
             ).catch(err => console.error('Notification broadcast error:', err));
+
+            // Notify the reporter that their item was approved
+            if (updated.reporterId) {
+                notificationService.notifyUser(
+                    updated.reporterId,
+                    id,
+                    'report_approved',
+                    { itemName: updated.item }
+                ).catch(err => console.error('Notification error:', err));
+            }
+        } else if (status === 'Rejected') {
+            // Admin rejected from the "Approve/Reject" flow
+            if (updated.reporterId) {
+                notificationService.notifyUser(
+                    updated.reporterId,
+                    id,
+                    'report_rejected',
+                    { itemName: updated.item }
+                ).catch(err => console.error('Notification error:', err));
+            }
         }
 
         // Notify item owner if status changed to retrieved/returned

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Bell, Check, Package, Search, ArrowLeft, CheckCheck, Trash2 } from 'lucide-react';
+import { Bell, Check, Package, Search, ArrowLeft, CheckCheck, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -81,6 +81,10 @@ function Notifications() {
                 return <Package size={20} className="text-emerald-500" />;
             case 'item_retrieved':
                 return <Check size={20} className="text-indigo-500" />;
+            case 'report_approved':
+                return <CheckCircle size={20} className="text-emerald-500" />;
+            case 'report_rejected':
+                return <XCircle size={20} className="text-red-500" />;
             default:
                 return <Bell size={20} className="text-slate-500" />;
         }
@@ -91,6 +95,8 @@ function Notifications() {
             case 'lost_posted': return 'Lost Item';
             case 'found_posted': return 'Found Item';
             case 'item_retrieved': return 'Retrieved';
+            case 'report_approved': return 'Approved';
+            case 'report_rejected': return 'Rejected';
             default: return 'Update';
         }
     };

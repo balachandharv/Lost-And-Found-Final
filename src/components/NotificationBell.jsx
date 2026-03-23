@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Check, CheckCheck, X, Package, Search } from 'lucide-react';
+import { Bell, Check, CheckCheck, X, Package, Search, CheckCircle, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -142,6 +142,10 @@ function NotificationBell() {
                 return <Package size={16} className="text-emerald-500" />;
             case 'item_retrieved':
                 return <Check size={16} className="text-indigo-500" />;
+            case 'report_approved':
+                return <CheckCircle size={16} className="text-emerald-500" />;
+            case 'report_rejected':
+                return <XCircle size={16} className="text-red-500" />;
             default:
                 return <Bell size={16} className="text-slate-500" />;
         }

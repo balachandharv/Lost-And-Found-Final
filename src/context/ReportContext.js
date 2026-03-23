@@ -42,18 +42,7 @@ export const ReportProvider = ({ children }) => {
     const addReport = async (newReport) => {
         // Add to local state first for immediate UI update
         setReports(prev => [newReport, ...prev]);
-
-        // Also send to backend to trigger notifications
-        try {
-            await fetch('http://localhost:5000/api/reports', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newReport)
-            });
-            console.log('Report sent to backend, notifications triggered');
-        } catch (error) {
-            console.error('Error sending report to backend:', error);
-        }
+        console.log('Report added to local state');
     };
 
     const updateReportStatus = async (id, newStatus) => {

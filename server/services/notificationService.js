@@ -23,6 +23,16 @@ const templates = {
         title: "Status Update",
         body: `Your reported ${itemName} status changed to: ${newStatus}`,
         icon: "/logo_icon.png"
+    }),
+    report_approved: (itemName) => ({
+        title: "Report Approved",
+        body: `Good news! Your report for ${itemName} has been approved and is now live.`,
+        icon: "/logo_icon.png"
+    }),
+    report_rejected: (itemName) => ({
+        title: "Report Rejected",
+        body: `Unfortunately, your report for ${itemName} has been rejected.`,
+        icon: "/logo_icon.png"
     })
 };
 
@@ -67,16 +77,17 @@ const sendPushNotification = async (userId, notification) => {
     const payload = {
         notification: {
             title: notification.title,
-            body: notification.body,
-            icon: notification.icon
+            body: notification.body
         },
         data: {
             itemId: notification.itemId || '',
-            type: notification.type || '',
-            clickAction: notification.clickAction || '/'
+            type: notification.type || ''
         },
         webpush: {
-            fcmOptions: {
+            notification: {
+                icon: notification.icon || '/logo_icon.png'
+            },
+            fcm_options: {
                 link: notification.clickAction || '/'
             }
         }
@@ -94,7 +105,7 @@ const sendPushNotification = async (userId, notification) => {
 
             // Update last used timestamp
             await db.update('deviceTokens', 'id', tokenDoc.id, {
-                lastUsed: new Date().toISOString()
+                lastUsed: new Date()
             });
         } catch (error) {
             console.error(`FCM send error for token ${tokenDoc.id}:`, error.message);
@@ -127,6 +138,12 @@ const notifyUser = async (userId, itemId, type, customData = {}) => {
             break;
         case 'status_update':
             content = templates.status_update(customData.itemName, customData.newStatus);
+            break;
+        case 'report_approved':
+            content = templates.report_approved(customData.itemName);
+            break;
+        case 'report_rejected':
+            content = templates.report_rejected(customData.itemName);
             break;
         default:
             content = { title: "Notification", body: "You have a new update", icon: "/logo_icon.png" };
