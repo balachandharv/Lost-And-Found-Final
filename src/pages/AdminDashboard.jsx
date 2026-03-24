@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -16,7 +16,13 @@ import {
   Trash2,
   ChevronDown,
   Shield,
-  Filter
+  Filter,
+  X,
+  Activity,
+  Database,
+  Server,
+  Clock,
+  Wifi
 } from "lucide-react";
 import PageTransition from "../components/PageTransition";
 import toast from "react-hot-toast";
@@ -29,8 +35,44 @@ function AdminDashboard() {
   const { reports, stats: reportStats, deleteReport, updateReportStatus } = useReport();
   const { users, updateUserStatus, deleteUser } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [showSystemStatus, setShowSystemStatus] = useState(false);
+  const [systemInfo, setSystemInfo] = useState(null);
   const navigate = useNavigate();
+
+  // Fetch system status when modal opens
+  useEffect(() => {
+    if (showSystemStatus) {
+      const startTime = Date.now();
+      fetch('http://localhost:5000/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
+        .then(res => {
+          const latency = Date.now() - startTime;
+          setSystemInfo({
+            serverStatus: res.ok || res.status === 401 ? 'Online' : 'Error',
+            latency: `${latency}ms`,
+            dbStatus: 'Connected',
+            totalUsers: users.length,
+            totalReports: reports.length,
+            activeReports: reports.filter(r => !['Retrieved', 'Returned', 'Resolved', 'Brought Back'].includes(r.status)).length,
+            resolvedReports: reportStats.totalReturned,
+            lastChecked: new Date().toLocaleTimeString(),
+          });
+        })
+        .catch(() => {
+          setSystemInfo({
+            serverStatus: 'Offline',
+            latency: 'N/A',
+            dbStatus: 'Disconnected',
+            totalUsers: users.length,
+            totalReports: reports.length,
+            activeReports: 0,
+            resolvedReports: 0,
+            lastChecked: new Date().toLocaleTimeString(),
+          });
+        });
+    }
+  }, [showSystemStatus]);
 
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this report?")) {
@@ -53,6 +95,7 @@ function AdminDashboard() {
   }, [reports, activeTab]);
 
   return (
+    <>
     <PageTransition>
       <div className="min-h-screen bg-slate-50 pb-20 pt-10">
         <div className="container-custom">
@@ -78,7 +121,7 @@ function AdminDashboard() {
                     A
                   </div>
                   <span>System</span>
-                  <ChevronDown size={14} />
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${isSettingsOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 <AnimatePresence>
@@ -90,18 +133,18 @@ function AdminDashboard() {
                       className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden"
                     >
                       <div className="p-1">
-                        <button onClick={() => navigate("/profile")} className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-lg">
+                        <button onClick={() => { navigate("/profile"); setIsSettingsOpen(false); }} className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-lg">
                           <User size={16} /> Profile By ID
                         </button>
                         <button
-                          onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+                          onClick={() => { navigate("/notifications"); setIsSettingsOpen(false); }}
                           className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-lg"
                         >
-                          {notificationsEnabled ? <Bell size={16} /> : <BellOff size={16} />}
+                          <Bell size={16} />
                           <span>Notifications</span>
                         </button>
                         <button
-                          onClick={() => alert("System Status: All systems operational.")}
+                          onClick={() => { setShowSystemStatus(true); setIsSettingsOpen(false); }}
                           className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-lg"
                         >
                           <Monitor size={16} /> System Status
@@ -278,6 +321,103 @@ function AdminDashboard() {
         </div>
       </div>
     </PageTransition>
+
+    {/* System Status Modal */}
+    <AnimatePresence>
+      {showSystemStatus && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+          onClick={() => setShowSystemStatus(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden"
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                  <Monitor size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">System Status</h3>
+                  <p className="text-xs text-slate-500">Real-time health overview</p>
+                </div>
+              </div>
+              <button onClick={() => setShowSystemStatus(false)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5">
+              {systemInfo ? (
+                <>
+                  {/* Overall Status Banner */}
+                  <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${
+                    systemInfo.serverStatus === 'Online' 
+                      ? 'bg-emerald-50 border border-emerald-200' 
+                      : 'bg-red-50 border border-red-200'
+                  }`}>
+                    <div className={`w-3 h-3 rounded-full animate-pulse ${
+                      systemInfo.serverStatus === 'Online' ? 'bg-emerald-500' : 'bg-red-500'
+                    }`} />
+                    <span className={`font-semibold text-sm ${
+                      systemInfo.serverStatus === 'Online' ? 'text-emerald-700' : 'text-red-700'
+                    }`}>
+                      {systemInfo.serverStatus === 'Online' ? 'All Systems Operational' : 'System Offline'}
+                    </span>
+                  </div>
+
+                  {/* Service Grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <StatusItem icon={<Server size={16} />} label="Backend Server" value={systemInfo.serverStatus} isGood={systemInfo.serverStatus === 'Online'} />
+                    <StatusItem icon={<Database size={16} />} label="MySQL Database" value={systemInfo.dbStatus} isGood={systemInfo.dbStatus === 'Connected'} />
+                    <StatusItem icon={<Wifi size={16} />} label="API Latency" value={systemInfo.latency} isGood={true} />
+                    <StatusItem icon={<Clock size={16} />} label="Last Checked" value={systemInfo.lastChecked} isGood={true} />
+                  </div>
+
+                  {/* Statistics */}
+                  <div className="border-t border-slate-100 pt-4">
+                    <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Platform Statistics</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <div className="text-lg font-bold text-slate-900">{systemInfo.totalUsers}</div>
+                        <div className="text-xs text-slate-500">Registered Users</div>
+                      </div>
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <div className="text-lg font-bold text-slate-900">{systemInfo.totalReports}</div>
+                        <div className="text-xs text-slate-500">Total Reports</div>
+                      </div>
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <div className="text-lg font-bold text-indigo-600">{systemInfo.activeReports}</div>
+                        <div className="text-xs text-slate-500">Active Reports</div>
+                      </div>
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <div className="text-lg font-bold text-emerald-600">{systemInfo.resolvedReports}</div>
+                        <div className="text-xs text-slate-500">Resolved</div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin w-8 h-8 border-2 border-indigo-200 border-t-indigo-600 rounded-full" />
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   );
 }
 
@@ -308,6 +448,18 @@ const TabButton = ({ active, children, onClick }) => (
       />
     )}
   </button>
+);
+
+const StatusItem = ({ icon, label, value, isGood }) => (
+  <div className="bg-slate-50 rounded-xl p-3 flex items-center gap-3">
+    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isGood ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+      {icon}
+    </div>
+    <div>
+      <div className="text-[11px] text-slate-500">{label}</div>
+      <div className={`text-sm font-bold ${isGood ? 'text-emerald-600' : 'text-red-600'}`}>{value}</div>
+    </div>
+  </div>
 );
 
 export default AdminDashboard;

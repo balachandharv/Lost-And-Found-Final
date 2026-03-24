@@ -61,6 +61,28 @@
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+/* Hide native browser password reveal button (Edge/Chrome) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  display: none !important;
+}
+
+/* Global smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Smooth transitions for all interactive elements */
+a, button {
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+/* Scroll to top on navigation - prevent layout shift */
+* {
+  scroll-margin-top: 5rem;
+}
+
 @layer base {
   body {
     @apply font-sans antialiased text-slate-900 bg-slate-50;
@@ -180,6 +202,18 @@
     @apply bg-slate-100 text-slate-700 border border-slate-200;
   }
 }
+
+/* Sprite Logo Implementation */
+.sprite-logo {
+  display: inline-block;
+  background-size: 200% 200%;
+  background-repeat: no-repeat;
+}
+
+.sprite-top-left { background-position: 0% 0%; }
+.sprite-top-right { background-position: 100% 0%; }
+.sprite-bottom-left { background-position: 0% 100%; }
+.sprite-bottom-right { background-position: 100% 100%; }
 
 /* Animations - Subtle Only */
 .fade-in {

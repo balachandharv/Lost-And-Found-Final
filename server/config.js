@@ -17,7 +17,7 @@ module.exports = {
         port: 587,
         secure: false,
         user: "balachandhar021@gmail.com",  // Sender email
-        pass: "YOUR_APP_PASSWORD_HERE"       // Replace with Gmail App Password
+        pass: "tngqmlacebmabekd"       // Gmail App Password
     },
 
     // JWT Configuration

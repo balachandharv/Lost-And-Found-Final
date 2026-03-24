@@ -183,32 +183,39 @@ function NotificationBell() {
                         className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50"
                     >
                         {/* Header */}
-                        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                            <h3 className="font-bold text-slate-900">Notifications</h3>
-                            <div className="flex items-center gap-2">
-                                {notifications.length > 0 && (
-                                    <button
-                                        onClick={handleClearAll}
-                                        className="text-xs text-red-500 hover:text-red-700 font-medium"
-                                    >
-                                        Clear All
-                                    </button>
-                                )}
-                                {unreadCount > 0 && (
-                                    <button
-                                        onClick={handleMarkAllRead}
-                                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
-                                    >
-                                        <CheckCheck size={14} /> Mark all read
-                                    </button>
-                                )}
+                        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="font-bold text-slate-900 text-base">Notifications</h3>
                                 <button
                                     onClick={() => setIsOpen(false)}
-                                    className="p-1 rounded hover:bg-slate-200 text-slate-400"
+                                    className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
                                 >
                                     <X size={16} />
                                 </button>
                             </div>
+                            {(notifications.length > 0 || unreadCount > 0) && (
+                                <div className="flex items-center gap-3">
+                                    {unreadCount > 0 && (
+                                        <button
+                                            onClick={handleMarkAllRead}
+                                            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 transition-colors"
+                                        >
+                                            <CheckCheck size={13} /> Mark all read
+                                        </button>
+                                    )}
+                                    {notifications.length > 0 && (
+                                        <>
+                                            {unreadCount > 0 && <span className="text-slate-300 text-xs">|</span>}
+                                            <button
+                                                onClick={handleClearAll}
+                                                className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                                            >
+                                                Clear All
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Notifications List */}

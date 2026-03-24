@@ -271,3 +271,4 @@ const db = {
 module.exports = db;
 module.exports.initDB = initDB;
 module.exports.pool = pool;
+module.exports.toCamelCase = toCamelCase;

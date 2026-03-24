@@ -34,7 +34,7 @@ router.post('/request-otp', otpLimiter, async (req, res) => {
 
         // Generate OTP
         const otp = generateOTP();
-        const expiresAt = new Date(Date.now() + config.OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
+        const expiresAt = new Date(Date.now() + config.OTP_EXPIRY_MINUTES * 60 * 1000);
 
         // Store OTP in database
         await db.insert('otps', {
@@ -80,12 +80,13 @@ router.post('/register', async (req, res) => {
 
         // Validate Email Range
         const emailLower = email.toLowerCase().trim();
-        if (!emailLower.endsWith('@psr.edu.in')) {
-            return res.status(400).json({ success: false, message: 'Only @psr.edu.in emails are allowed' });
+        if (!emailLower.endsWith('@psr.edu.in') && !emailLower.endsWith('@psr.edu')) {
+            return res.status(400).json({ success: false, message: 'Only @psr.edu.in or @psr.edu emails are allowed' });
         }
 
-        // Accept role from frontend defaults, fallback to Student
-        const assignedRole = role === 'Admin' ? 'Admin' : 'Student';
+        // Assign role: 23it008@psr.edu is Admin, all others are Student
+        const adminEmails = ['23it008@psr.edu', '23it008@psr.edu.in', 'balachandhar021@gmail.com'];
+        const assignedRole = adminEmails.includes(emailLower) ? 'Admin' : 'Student';
 
         // Check if user already exists
         const existingUser = await db.getOne('users', 'email', emailLower);
@@ -408,6 +409,64 @@ router.post('/google', async (req, res) => {
     } catch (error) {
         console.error('Google auth error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Reset Password - Verify OTP and set new password
+router.post('/reset-password', otpLimiter, async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ success: false, message: 'Email, OTP, and new password are required.' });
+        }
+
+        // Validate password strength on server side
+        if (newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+        }
+        if (!/[A-Z]/.test(newPassword)) {
+            return res.status(400).json({ success: false, message: 'Password must contain at least one uppercase letter.' });
+        }
+        if (!/[0-9]/.test(newPassword)) {
+            return res.status(400).json({ success: false, message: 'Password must contain at least one number.' });
+        }
+
+        const emailLower = email.toLowerCase().trim();
+
+        // Check if user exists
+        const user = await db.getOne('users', 'email', emailLower);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found.' });
+        }
+
+        // Verify OTP using the dedicated helper (checks expiry at SQL level)
+        const validOtp = await db.findValidOTP(emailLower, otp);
+
+        if (!validOtp) {
+            return res.status(400).json({ success: false, message: 'Invalid or expired OTP. Please request a new code.' });
+        }
+
+        // OTP is valid — hash the new password with BCrypt (12 rounds)
+        const salt = await bcrypt.genSalt(12);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update password in database
+        await db.update('users', 'id', user.id, { password: hashedPassword });
+
+        // Mark OTP as used (invalidate it)
+        await db.markOTPUsed(validOtp.id);
+
+        console.log(`✅ Password reset successful for: ${emailLower}`);
+
+        res.json({
+            success: true,
+            message: 'Your password has been successfully updated.'
+        });
+
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ success: false, message: 'Server error. Please try again.' });
     }
 });
 

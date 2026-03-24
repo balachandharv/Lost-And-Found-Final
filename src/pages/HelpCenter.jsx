@@ -68,7 +68,7 @@ function HelpCenter() {
                             </div>
                             <h3 className="font-bold text-slate-900 mb-2">Contact Admin</h3>
                             <p className="text-sm text-slate-500 mb-4">Direct assistance for account issues.</p>
-                            <a href="mailto:support@psr.edu.in" className="text-indigo-600 text-sm font-medium hover:underline">Email Us</a>
+                            <a href="mailto:balachandhar021@gmail.com?subject=Help%20Request%20-%20Campus%20Lost%20%26%20Found" className="text-indigo-600 text-sm font-medium hover:underline">Email Us</a>
                         </div>
 
                         <div className="card p-6 text-center hover:shadow-md transition-shadow">
@@ -77,7 +77,7 @@ function HelpCenter() {
                             </div>
                             <h3 className="font-bold text-slate-900 mb-2">Feedback</h3>
                             <p className="text-sm text-slate-500 mb-4">Help us improve the platform.</p>
-                            <button className="text-indigo-600 text-sm font-medium hover:underline">Send Feedback</button>
+                            <a href="mailto:balachandhar021@gmail.com?subject=Feedback%20-%20Campus%20Lost%20%26%20Found&body=Hi%2C%0A%0AI%20would%20like%20to%20share%20my%20feedback%3A%0A%0A" className="text-indigo-600 text-sm font-medium hover:underline">Send Feedback</a>
                         </div>
                     </div>
 

@@ -79,9 +79,9 @@ export const AuthProvider = ({ children }) => {
     const isValidCollegeEmail = (emailToCheck) => {
         const email = emailToCheck.toLowerCase().trim();
 
-        // Must end with @psr.edu.in
-        if (!email.endsWith('@psr.edu.in')) {
-            return { valid: false, message: "Only PSR college email IDs are allowed." };
+        // Must end with @psr.edu.in or @psr.edu
+        if (!email.endsWith('@psr.edu.in') && !email.endsWith('@psr.edu')) {
+            return { valid: false, message: "Only PSR college email IDs are allowed (@psr.edu.in or @psr.edu)." };
         }
 
         return { valid: true };

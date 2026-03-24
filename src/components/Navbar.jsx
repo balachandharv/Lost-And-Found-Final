@@ -1,7 +1,8 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useReport } from "../context/ReportContext";
+import { motion, AnimatePresence } from "framer-motion";
 import { Search, Menu, X, User, LogOut, Box, PlusCircle, Shield, Home, Grid } from "lucide-react";
 import NotificationBell from "./NotificationBell";
 
@@ -14,6 +15,23 @@ function Navbar() {
   const [suggestions, setSuggestions] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+
+  // Detect scroll for glassmorphism effect
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close dropdown on route change
+  useEffect(() => {
+    setShowDropdown(false);
+    setShowMobileMenu(false);
+  }, [location.pathname]);
+
+  // Helper for active link styling
+  const isActive = (path) => location.pathname === path;
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -46,7 +64,11 @@ function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm transition-all duration-300">
+    <nav className={`sticky top-0 z-50 border-b transition-all duration-300 ${
+      scrolled 
+        ? 'bg-white/80 backdrop-blur-xl border-slate-200/80 shadow-md' 
+        : 'bg-white border-slate-200 shadow-sm'
+    }`}>
       <div className="container-custom">
         <div className="flex justify-between items-center h-16">
 
@@ -60,10 +82,10 @@ function Navbar() {
 
           {/* 2. Brand Logo */}
           <Link to="/" className="flex items-center gap-2.5 group relative z-10">
-            <img src="/logo_icon.png" alt="Logo" className="w-10 h-10 object-contain" />
-            <div className="flex flex-col">
-              <span className="text-slate-900 text-lg font-bold tracking-tight leading-none">CAMPUS</span>
-              <span className="text-indigo-600 text-xs font-bold tracking-widest uppercase">PORTAL</span>
+            <img src={process.env.PUBLIC_URL + "/MainLogo.png"} alt="Brand Logo" className="h-10 md:h-12 w-auto object-contain" />
+            <div className="flex flex-col hidden sm:flex">
+              <span className="text-slate-900 text-lg font-bold tracking-tight leading-none">LOST</span>
+              <span className="text-indigo-600 text-xs font-bold tracking-widest uppercase">& FOUND</span>
             </div>
           </Link>
 
@@ -113,10 +135,14 @@ function Navbar() {
           {/* 4. Desktop Navigation (Hidden on Mobile) */}
           <div className="hidden md:flex items-center gap-6">
             <nav className="flex items-center gap-1">
-              <Link to="/" className="text-slate-600 font-medium hover:text-indigo-600 transition-colors px-3 py-2 text-sm rounded-md hover:bg-indigo-50 flex items-center gap-2">
+              <Link to="/" className={`font-medium transition-all duration-200 px-3 py-2 text-sm rounded-md flex items-center gap-2 ${
+                isActive('/') ? 'text-indigo-600 bg-indigo-50' : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+              }`}>
                 <Home size={16} /> Home
               </Link>
-              <Link to="/items" className="text-slate-600 font-medium hover:text-indigo-600 transition-colors px-3 py-2 text-sm rounded-md hover:bg-indigo-50 flex items-center gap-2">
+              <Link to="/items" className={`font-medium transition-all duration-200 px-3 py-2 text-sm rounded-md flex items-center gap-2 ${
+                isActive('/items') ? 'text-indigo-600 bg-indigo-50' : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50'
+              }`}>
                 <Grid size={16} /> Browse
               </Link>
             </nav>
@@ -264,44 +290,64 @@ function Navbar() {
       </div>
 
       {/* Mobile Menu Drawer */}
-      {showMobileMenu && (
-        <div className="md:hidden bg-white border-t border-slate-100 shadow-xl fixed left-0 right-0 z-40 animate-in slide-in-from-top-10 fade-in duration-200">
-          <div className="p-4 space-y-4">
-            <div className="relative">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-indigo-100 outline-none"
-              />
-            </div>
+      <AnimatePresence>
+        {showMobileMenu && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+            className="md:hidden bg-white border-t border-slate-100 shadow-xl fixed left-0 right-0 z-40 overflow-hidden"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2, delay: 0.05 }}
+              className="p-4 space-y-4"
+            >
+              <div className="relative">
+                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                />
+              </div>
 
-            <div className="space-y-1">
-              <Link to="/" className="flex items-center gap-3 text-slate-700 font-medium py-2.5 px-4 rounded-lg hover:bg-slate-50" onClick={() => setShowMobileMenu(false)}>
-                <Home size={18} className="text-slate-400" /> Home
-              </Link>
-              <Link to="/items" className="flex items-center gap-3 text-slate-700 font-medium py-2.5 px-4 rounded-lg hover:bg-slate-50" onClick={() => setShowMobileMenu(false)}>
-                <Grid size={18} className="text-slate-400" /> Browse Items
-              </Link>
-              <Link to="/report-lost" className="flex items-center gap-3 text-slate-700 font-medium py-2.5 px-4 rounded-lg hover:bg-slate-50" onClick={() => setShowMobileMenu(false)}>
-                <PlusCircle size={18} className="text-slate-400" /> Report Lost Item
-              </Link>
-            </div>
-
-            {/* If user is NOT logged in, show 'Sign In' in drawer as fallback/reinforcement */}
-            {!user && (
-              <div className="pt-2 border-t border-slate-100">
-                <Link to="/login" className="block w-full text-center btn btn-primary py-3" onClick={() => setShowMobileMenu(false)}>
-                  Sign In
+              <div className="space-y-1">
+                <Link to="/" className={`flex items-center gap-3 font-medium py-2.5 px-4 rounded-lg transition-colors ${
+                  isActive('/') ? 'text-indigo-600 bg-indigo-50' : 'text-slate-700 hover:bg-slate-50'
+                }`} onClick={() => setShowMobileMenu(false)}>
+                  <Home size={18} className={isActive('/') ? 'text-indigo-500' : 'text-slate-400'} /> Home
+                </Link>
+                <Link to="/items" className={`flex items-center gap-3 font-medium py-2.5 px-4 rounded-lg transition-colors ${
+                  isActive('/items') ? 'text-indigo-600 bg-indigo-50' : 'text-slate-700 hover:bg-slate-50'
+                }`} onClick={() => setShowMobileMenu(false)}>
+                  <Grid size={18} className={isActive('/items') ? 'text-indigo-500' : 'text-slate-400'} /> Browse Items
+                </Link>
+                <Link to="/report-lost" className={`flex items-center gap-3 font-medium py-2.5 px-4 rounded-lg transition-colors ${
+                  isActive('/report-lost') ? 'text-indigo-600 bg-indigo-50' : 'text-slate-700 hover:bg-slate-50'
+                }`} onClick={() => setShowMobileMenu(false)}>
+                  <PlusCircle size={18} className={isActive('/report-lost') ? 'text-indigo-500' : 'text-slate-400'} /> Report Lost Item
                 </Link>
               </div>
-            )}
-          </div>
-        </div>
-      )}
+
+              {/* If user is NOT logged in, show 'Sign In' in drawer as fallback/reinforcement */}
+              {!user && (
+                <div className="pt-2 border-t border-slate-100">
+                  <Link to="/login" className="block w-full text-center btn btn-primary py-3" onClick={() => setShowMobileMenu(false)}>
+                    Sign In
+                  </Link>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

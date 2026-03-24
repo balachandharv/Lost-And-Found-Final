@@ -1,49 +1,41 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { Search } from "lucide-react";
 
 function Loader({ text = "Loading..." }) {
     return (
-        <div style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100%",
-            width: "100%",
-            minHeight: "200px"
-        }}>
+        <div className="flex flex-col items-center justify-center w-full min-h-[200px] py-12">
+            {/* Animated pulsing icon */}
             <motion.div
-                style={{ fontSize: "3rem", marginBottom: "1rem" }}
+                className="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-5"
                 animate={{
-                    x: [-20, 20, -20],
-                    rotate: [0, 10, -10, 0]
+                    scale: [1, 1.08, 1],
+                    opacity: [0.7, 1, 0.7],
                 }}
                 transition={{
-                    duration: 2,
+                    duration: 1.8,
                     repeat: Infinity,
                     ease: "easeInOut"
                 }}
             >
-                🔍
+                <Search size={24} />
             </motion.div>
 
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                <span style={{ fontSize: "1.2rem", fontWeight: 500, color: "var(--text-muted)" }}>{text}</span>
-                <motion.span
-                    animate={{ opacity: [0, 1, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity, delay: 0 }}
-                    style={{ fontSize: "1.5rem", color: "var(--primary)" }}
-                >.</motion.span>
-                <motion.span
-                    animate={{ opacity: [0, 1, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity, delay: 0.3 }}
-                    style={{ fontSize: "1.5rem", color: "var(--primary)" }}
-                >.</motion.span>
-                <motion.span
-                    animate={{ opacity: [0, 1, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity, delay: 0.6 }}
-                    style={{ fontSize: "1.5rem", color: "var(--primary)" }}
-                >.</motion.span>
+            {/* Text with animated dots */}
+            <div className="flex items-center gap-1">
+                <span className="text-sm font-medium text-slate-500">{text}</span>
+                <div className="flex gap-0.5 ml-0.5">
+                    {[0, 0.2, 0.4].map((delay, i) => (
+                        <motion.span
+                            key={i}
+                            animate={{ opacity: [0.2, 1, 0.2] }}
+                            transition={{ duration: 1.2, repeat: Infinity, delay }}
+                            className="text-indigo-500 font-bold text-sm"
+                        >
+                            .
+                        </motion.span>
+                    ))}
+                </div>
             </div>
         </div>
     );

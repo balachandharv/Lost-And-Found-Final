@@ -4,25 +4,22 @@ import { motion } from "framer-motion";
 const pageVariants = {
     initial: {
         opacity: 0,
-        y: 10,
-        scale: 0.99
+        y: 6,
     },
     in: {
         opacity: 1,
         y: 0,
-        scale: 1
     },
     out: {
         opacity: 0,
-        y: -10,
-        scale: 1.01
+        y: -4,
     }
 };
 
 const pageTransition = {
     type: "tween",
-    ease: [0.43, 0.13, 0.23, 0.96], // Smooth cinematic ease
-    duration: 0.5
+    ease: [0.25, 0.1, 0.25, 1], // CSS ease — smooth and natural
+    duration: 0.3
 };
 
 function PageTransition({ children }) {
@@ -33,7 +30,7 @@ function PageTransition({ children }) {
             exit="out"
             variants={pageVariants}
             transition={pageTransition}
-            style={{ width: "100%" }}
+            style={{ width: "100%", willChange: "opacity, transform" }}
         >
             {children}
         </motion.div>

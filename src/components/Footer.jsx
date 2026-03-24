@@ -10,12 +10,16 @@ function Footer() {
 
                     {/* Brand Column */}
                     <div className="space-y-4">
-                        <Link to="/" className="flex items-center gap-2 group">
-                            <img src="/logo_icon.png" alt="Logo" className="w-10 h-10 object-contain" />
-                            <span className="text-xl font-bold text-white tracking-tight group-hover:text-indigo-400 transition-colors">
-                                CAMPUS
-                                <span className="text-indigo-500 text-sm font-semibold ml-1">PORTAL</span>
-                            </span>
+                        <Link to="/" className="flex items-center gap-3 group">
+                            <img src={process.env.PUBLIC_URL + "/FooterFinal.png"} alt="Footer Brand Logo" className="h-10 md:h-12 w-auto object-contain drop-shadow" />
+                            <div className="flex flex-col">
+                                <span className="text-xl font-extrabold text-white tracking-tight group-hover:text-indigo-400 transition-colors leading-tight">
+                                    Lost
+                                    <span className="text-indigo-400 ml-1">&</span>
+                                    <span className="text-white ml-1">Found</span>
+                                </span>
+                                <span className="text-[10px] font-medium text-slate-500 tracking-widest uppercase">Campus Portal</span>
+                            </div>
                         </Link>
                         <p className="text-slate-400 text-sm leading-relaxed">
                             The official centralized platform for reporting and recovering lost items across campus. Secure, fast, and community-driven.
@@ -54,7 +58,7 @@ function Footer() {
                         <h3 className="text-white font-bold text-lg mb-6">Contact Us</h3>
                         <ul className="space-y-4">
                             <li className="flex items-start gap-3">
-                                <MapPin size={20} className="text-indigo-500 shrink-0 mt-1" />
+                                <MapPin size={18} className="text-indigo-500 shrink-0 mt-0.5" />
                                 <a
                                     href="https://www.google.com/maps/search/?api=1&query=PSR+Engineering+College+Sivakasi"
                                     target="_blank"
@@ -65,13 +69,13 @@ function Footer() {
                                 </a>
                             </li>
                             <li className="flex items-center gap-3">
-                                <Phone size={20} className="text-indigo-500 shrink-0" />
+                                <Phone size={18} className="text-indigo-500 shrink-0" />
                                 <a href="tel:+918428103075" className="text-sm hover:text-white transition-colors cursor-pointer hover:underline">
                                     +91 8428103075
                                 </a>
                             </li>
                             <li className="flex items-center gap-3">
-                                <Mail size={20} className="text-indigo-500 shrink-0" />
+                                <Mail size={18} className="text-indigo-500 shrink-0" />
                                 <a
                                     href="https://mail.google.com/mail/?view=cm&fs=1&to=balachandhar021@gmail.com"
                                     target="_blank"
@@ -80,10 +84,6 @@ function Footer() {
                                 >
                                     balachandhar021@gmail.com
                                 </a>
-                            </li>
-                            <li className="flex items-center gap-3 pt-2">
-                                <Shield size={20} className="text-emerald-500 shrink-0" />
-                                <span className="text-xs text-emerald-400 font-medium bg-emerald-500/10 px-2 py-1 rounded">Official Campus Portal</span>
                             </li>
                         </ul>
                     </div>

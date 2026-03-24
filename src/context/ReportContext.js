@@ -12,6 +12,25 @@ export const ReportProvider = ({ children }) => {
         return storedReports ? JSON.parse(storedReports) : mockReports;
     });
 
+    // Fetch reports from backend on mount
+    useEffect(() => {
+        const fetchReports = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:5000/api/reports', {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                const data = await response.json();
+                if (data.success && data.reports.length > 0) {
+                    setReports(data.reports);
+                }
+            } catch (err) {
+                console.error("Failed to fetch reports from server:", err);
+            }
+        };
+        fetchReports();
+    }, []);
+
     const [stats, setStats] = useState({
         totalLost: 0,
         totalFound: 0,
@@ -34,8 +53,10 @@ export const ReportProvider = ({ children }) => {
     const deleteReport = (id) => {
         setReports(prev => prev.filter(report => report.id !== id));
         // Also delete from backend
+        const token = localStorage.getItem('token');
         fetch(`http://localhost:5000/api/reports/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         }).catch(err => console.error('Delete report error:', err));
     };
 
@@ -53,9 +74,13 @@ export const ReportProvider = ({ children }) => {
 
         // Also update backend to trigger notifications
         try {
+            const token = localStorage.getItem('token');
             await fetch(`http://localhost:5000/api/reports/${id}/status`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({ status: newStatus })
             });
             console.log('Status updated on backend, notifications triggered');
