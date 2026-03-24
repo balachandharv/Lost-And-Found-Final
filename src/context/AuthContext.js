@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { Search } from 'lucide-react';
 
 const AuthContext = createContext();
 
@@ -242,8 +243,10 @@ export const AuthProvider = ({ children }) => {
                 background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)"
             }}>
                 <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>🔍</div>
-                    <div style={{ color: "#64748b", fontWeight: 500 }}>Loading...</div>
+                    <div className="spinner-container" style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}>
+                        <div className="loading-spinner"></div>
+                    </div>
+                    <div style={{ color: "#64748b", fontWeight: 600, letterSpacing: "0.025em" }}>Verifying Session...</div>
                 </div>
             </div>
         );

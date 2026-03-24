@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BellOff, X } from 'lucide-react';
 
 const NotificationPanel = ({ isOpen, onClose, notifications = [], onClear, onClearAll }) => {
     return (
@@ -27,7 +28,9 @@ const NotificationPanel = ({ isOpen, onClose, notifications = [], onClear, onCle
                     <div className="max-h-96 overflow-y-auto">
                         {notifications.length === 0 ? (
                             <div className="p-8 text-center text-slate-400 flex flex-col items-center">
-                                <span className="text-4xl mb-2">🔕</span>
+                                <div className="p-4 rounded-full bg-slate-50 text-slate-300 mb-2">
+                                    <BellOff size={32} />
+                                </div>
                                 <p className="text-sm">No new notifications</p>
                             </div>
                         ) : (
@@ -49,7 +52,7 @@ const NotificationPanel = ({ isOpen, onClose, notifications = [], onClear, onCle
                                                 onClick={() => onClear(notif.id)}
                                                 className="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1"
                                             >
-                                                ✕
+                                                <X size={14} />
                                             </button>
                                         </div>
                                     </li>

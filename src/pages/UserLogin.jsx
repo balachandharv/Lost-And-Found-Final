@@ -75,9 +75,9 @@ function UserLogin() {
                       alignItems: "center",
                       justifyContent: "center",
                       margin: "0 auto 1rem auto",
-                      fontSize: "2.5rem"
+                      color: "var(--primary)"
                     }}>
-                      🎓
+                      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
                     </div>
                     <h2 style={{ fontSize: "1.75rem", marginBottom: "0.5rem" }}>Student Login</h2>
                     <p style={{ color: "var(--text-muted)", margin: 0 }}>Welcome back! Please login to your account.</p>
@@ -105,7 +105,7 @@ function UserLogin() {
                       <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>Password</label>
                       <input
                         type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
+                        placeholder="Enter your password"
                         required
                         style={{ backgroundColor: "rgba(255,255,255,0.8)", width: "100%", padding: "0.875rem" }} // ensuring consistent styling
                       />

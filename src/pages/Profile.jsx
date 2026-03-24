@@ -13,7 +13,9 @@ import {
     Package,
     Mail,
     Phone,
-    Camera
+    Camera,
+    Clock,
+    X
 } from 'lucide-react';
 
 function Profile() {
@@ -174,7 +176,11 @@ function Profile() {
                                                                 <Calendar size={12} /> {report.date}
                                                                 <span>•</span>
                                                                 <span className={report.status === 'Resolved' ? 'text-emerald-600 font-medium' : report.status === 'PendingApproval' ? 'text-amber-600 font-semibold bg-amber-50 px-1.5 py-0.5 rounded' : report.status === 'Rejected' ? 'text-red-600 font-semibold bg-red-50 px-1.5 py-0.5 rounded' : ''}>
-                                                                    {report.status === 'PendingApproval' ? '⏳ Awaiting Approval' : report.status === 'Rejected' ? '❌ Rejected' : report.status}
+                                                                    {report.status === 'PendingApproval' ? (
+                                                                        <span className="flex items-center gap-1"><Clock size={14} className="text-amber-500" /> Awaiting Approval</span>
+                                                                    ) : report.status === 'Rejected' ? (
+                                                                        <span className="flex items-center gap-1"><X size={14} className="text-red-500" /> Rejected</span>
+                                                                    ) : report.status}
                                                                 </span>
                                                             </div>
                                                         </div>
