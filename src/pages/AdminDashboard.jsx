@@ -86,8 +86,9 @@ function AdminDashboard() {
         return reports.filter(r => r.type === "Lost" && !["Retrieved", "Returned", "Resolved", "Brought Back"].includes(r.status));
       case "found":
         return reports.filter(r => r.type === "Found" && !["Retrieved", "Returned", "Resolved", "Brought Back"].includes(r.status));
-      case "retrieved":
-        return reports.filter(r => ["Retrieved", "Returned", "Resolved", "Brought Back"].includes(r.status));
+      case "history":
+        // Sorting history to show most recent first
+        return reports.sort((a, b) => new Date(b.date) - new Date(a.date));
       case "all_reports":
       default:
         return reports;
@@ -173,13 +174,113 @@ function AdminDashboard() {
               <TabButton active={activeTab === "all_reports"} onClick={() => setActiveTab("all_reports")}>Overview</TabButton>
               <TabButton active={activeTab === "lost"} onClick={() => setActiveTab("lost")}>Lost Reports</TabButton>
               <TabButton active={activeTab === "found"} onClick={() => setActiveTab("found")}>Found Reports</TabButton>
-              <TabButton active={activeTab === "retrieved"} onClick={() => setActiveTab("retrieved")}>History</TabButton>
+              <TabButton active={activeTab === "history"} onClick={() => setActiveTab("history")}>History Archive</TabButton>
               <TabButton active={activeTab === "users"} onClick={() => setActiveTab("users")}>User Database</TabButton>
             </div>
 
             <div className="p-6">
               <AnimatePresence mode="wait">
-                {activeTab !== "users" ? (
+                {activeTab === "history" ? (
+                  <motion.div
+                    key="history-list"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                      <div>
+                        <h2 className="text-xl font-bold text-slate-900">System Activity History</h2>
+                        <p className="text-sm text-slate-500">Comprehensive log of all lost, found and retrieved items.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold">
+                          <Clock size={14} /> Full History
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto -mx-6">
+                      <table className="w-full text-left border-collapse min-w-[800px]">
+                        <thead>
+                          <tr className="bg-slate-50 border-y border-slate-100">
+                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Item Details</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Type</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Location & Date</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Reported By</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {filteredReports.map((report) => (
+                            <tr key={report.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-4">
+                                <span className="font-semibold text-slate-900 block">{report.item}</span>
+                                <span className="text-[10px] text-slate-400 font-medium bg-slate-100 px-1.5 py-0.5 rounded mt-1 inline-block uppercase">{report.category || 'General'}</span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  report.type === 'Lost' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'
+                                }`}>
+                                  {report.type}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="text-sm text-slate-600 flex items-center gap-1.5">
+                                  <MapPin size={12} className="text-slate-400" /> {report.location}
+                                </div>
+                                <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                                  <Calendar size={12} className="text-slate-400" /> {report.date}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex flex-col gap-1">
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-center w-fit ${
+                                    ["Retrieved", "Returned", "Resolved", "Brought Back"].includes(report.status)
+                                      ? 'bg-blue-50 text-blue-700 border border-blue-100'
+                                      : 'bg-slate-100 text-slate-600 border border-slate-200'
+                                  }`}>
+                                    {report.status}
+                                  </span>
+                                  {report.retrievedBy && (
+                                    <span className="text-[10px] text-slate-500">To: {report.retrievedBy}</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                                    {report.reportedBy?.charAt(0) || 'U'}
+                                  </div>
+                                  <span className="text-sm text-slate-600">{report.reportedBy}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => navigate(`/item/${report.id}`)}
+                                    className="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors"
+                                    title="View Record"
+                                  >
+                                    <Monitor size={16} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(report.id)}
+                                    className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
+                                    title="Delete History Record"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </motion.div>
+                ) : activeTab !== "users" ? (
                   <motion.div
                     key="reports-list"
                     initial={{ opacity: 0 }}
