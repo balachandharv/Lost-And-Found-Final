@@ -1,5 +1,5 @@
 export const mockStats = {
-    totalUsers: 1250,
+    totalUsers: 30,
     activeLostReports: 42,
     itemsFound: 89,
     casesSolved: 315,

@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class DeviceToken {
     
-    @Id
+    @Id 
     @Column(length = 50)
     private String id;
     

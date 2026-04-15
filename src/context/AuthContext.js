@@ -12,12 +12,39 @@ const DEFAULT_USERS = [
 ];
 
 export const AuthProvider = ({ children }) => {
-    // API URL - moved to top to prevent ReferenceError
+    // API URLs - moved to top to prevent ReferenceError
     const API_URL = "http://localhost:5000/api/auth";
+    const USERS_API_URL = "http://localhost:5000/api/users";
 
     const [user, setUser] = useState(null);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Fetch users from backend if admin
+    const fetchUsers = async () => {
+        const token = localStorage.getItem("token");
+        if (!token || !user || user.role !== "Admin") return;
+
+        try {
+            const response = await fetch(USERS_API_URL, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setUsers(data.users);
+                localStorage.setItem("users", JSON.stringify(data.users));
+            }
+        } catch (error) {
+            console.error("Fetch users error:", error);
+        }
+    };
+
+    // Re-fetch users whenever user changes or on initial load if admin
+    useEffect(() => {
+        if (user && user.role === "Admin") {
+            fetchUsers();
+        }
+    }, [user]);
 
     // Initialize users and check for existing session
     useEffect(() => {
@@ -183,16 +210,37 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Update user status (Admin function)
-    const updateUserStatus = (id, newStatus) => {
-        const updatedUsers = users.map(u =>
-            u.id === id ? { ...u, status: newStatus } : u
-        );
-        setUsers(updatedUsers);
-        localStorage.setItem("users", JSON.stringify(updatedUsers));
+    const updateUserStatus = async (id, newStatus) => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-        // If blocked the current user, log them out
-        if (user && user.id === id && newStatus === "Blocked") {
-            logout();
+        try {
+            const response = await fetch(`${USERS_API_URL}/${id}/status`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                const updatedUsers = users.map(u =>
+                    u.id === id ? { ...u, status: newStatus } : u
+                );
+                setUsers(updatedUsers);
+                localStorage.setItem("users", JSON.stringify(updatedUsers));
+
+                // If blocked the current user, log them out
+                if (user && user.id === id && newStatus === "Blocked") {
+                    logout();
+                }
+            }
+            return data;
+        } catch (error) {
+            console.error("Update status error:", error);
+            return { success: false, message: "Server error" };
         }
     };
 
@@ -213,14 +261,30 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Delete User (Admin function)
-    const deleteUser = (id) => {
-        const updatedUsers = users.filter(u => u.id !== id);
-        setUsers(updatedUsers);
-        localStorage.setItem("users", JSON.stringify(updatedUsers));
+    const deleteUser = async (id) => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-        // If deleted self (which shouldn't happen via UI normally, but safeguard)
-        if (user && user.id === id) {
-            logout();
+        try {
+            const response = await fetch(`${USERS_API_URL}/${id}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                const updatedUsers = users.filter(u => u.id !== id);
+                setUsers(updatedUsers);
+                localStorage.setItem("users", JSON.stringify(updatedUsers));
+
+                if (user && user.id === id) {
+                    logout();
+                }
+            }
+            return data;
+        } catch (error) {
+            console.error("Delete user error:", error);
+            return { success: false, message: "Server error" };
         }
     };
 
@@ -252,7 +316,21 @@ export const AuthProvider = ({ children }) => {
     }
 
     return (
-        <AuthContext.Provider value={{ user, users, login, logout, register, updateUserStatus, updateProfile, requestOtp, verifyOtp, resendOtp, resetPassword, deleteUser }}>
+        <AuthContext.Provider value={{
+            user,
+            users,
+            login,
+            logout,
+            register,
+            updateUserStatus,
+            updateProfile,
+            requestOtp,
+            verifyOtp,
+            resendOtp,
+            resetPassword,
+            deleteUser,
+            refreshUsers: fetchUsers
+        }}>
             {children}
         </AuthContext.Provider>
     );

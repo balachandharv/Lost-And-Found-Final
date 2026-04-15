@@ -83,9 +83,9 @@ function AdminDashboard() {
   const filteredReports = React.useMemo(() => {
     switch (activeTab) {
       case "lost":
-        return reports.filter(r => r.type === "Lost" && !["Retrieved", "Returned", "Resolved", "Brought Back"].includes(r.status));
+        return reports.filter(r => r.type === "Lost" && (r.status === "PendingApproval" || r.status === "Pending" || r.status === "Active"));
       case "found":
-        return reports.filter(r => r.type === "Found" && !["Retrieved", "Returned", "Resolved", "Brought Back"].includes(r.status));
+        return reports.filter(r => r.type === "Found" && (r.status === "PendingApproval" || r.status === "Pending" || r.status === "Active"));
       case "history":
         // Sorting history to show most recent first
         return reports.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -331,6 +331,7 @@ function AdminDashboard() {
                                   onClick={() => {
                                     if (window.confirm("Approve this report for listing?")) {
                                       updateReportStatus(report.id, "Pending");
+                                      toast.success("Report approved and published!");
                                     }
                                   }}
                                   className="btn btn-ghost text-xs py-1.5 px-3 h-auto text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-medium"

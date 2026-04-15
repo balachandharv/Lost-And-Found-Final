@@ -68,4 +68,22 @@ router.patch('/:id/status', verifyAdmin, async (req, res) => {
     }
 });
 
+// Delete user (Admin only)
+router.delete('/:id', verifyAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const deleted = await db.delete('users', 'id', id);
+
+        if (!deleted) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        res.json({ success: true, message: 'User deleted successfully' });
+    } catch (error) {
+        console.error('Delete user error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 module.exports = router;

@@ -56,8 +56,12 @@ function ItemsFeed() {
         (item.location && item.location.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      // 2. Approval Status (Only show approved or active items)
-      const isApproved = item.status !== "PendingApproval" && item.status !== "Rejected";
+      // 2. Approval Status (Show if Pending (Approved) or Active)
+      const isApproved = item.status === "Pending" || item.status === "Active";
+      const isPendingAdmin = item.status === "PendingApproval";
+      
+      // If user is admin, show everything that's not rejected
+      const canSee = (user?.role === "Admin") ? (item.status !== "Rejected") : isApproved;
 
       // 3. Type/Status Filter
       let matchesType = false;
@@ -74,7 +78,7 @@ function ItemsFeed() {
       if (currentCategory === "all") matchesCategory = true;
       else matchesCategory = item.category && item.category.toLowerCase() === currentCategory.toLowerCase();
 
-      if (matchesType && matchesCategory && matchesSearch && isApproved) {
+      if (matchesType && matchesCategory && matchesSearch && canSee) {
         if (seenIds.has(item.id)) return false;
         seenIds.add(item.id);
         return true;
